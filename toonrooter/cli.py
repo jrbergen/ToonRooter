@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 
 from .config import Config
+from .hardware.openocd import OpenOCDError, require_safe_jtag
+from .hardware.serial import TransportError, finite_timeout
 
 
 def parser() -> argparse.ArgumentParser:
@@ -20,12 +22,31 @@ def parser() -> argparse.ArgumentParser:
     keys.add_argument("--private-key", type=Path, default=Path("id_rsa"))
     keys.add_argument("--ssh-public-key", type=Path)
     keys.add_argument("--encrypt", action="store_true", help="Prompt privately for key passphrase")
+    observe = commands.add_parser("observe", help="Level 1: receive-only UART capture")
+    observe.add_argument("--serial", required=True)
+    observe.add_argument("--timeout", type=float, default=30.0)
+    observe.add_argument("--max-bytes", type=int, default=65536)
+    probe = commands.add_parser("probe", help="Host readiness; live JTAG is disabled")
+    probe.add_argument("--jtag", action="store_true")
     return result
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
+        if args.command == "observe":
+            from .diagnostics import observe
+            finite_timeout(args.timeout)
+            if not 0 < args.max_bytes <= 1048576:
+                raise ValueError("Invalid capture size")
+            return observe(args.serial, timeout=args.timeout, limit=args.max_bytes)
+        if args.command == "probe":
+            if args.jtag:
+                require_safe_jtag()
+            print("Level 0 readiness only. Passive UART: observe --serial PATH. "
+                  "Live JTAG: disabled; legacy reset handlers modify target state. "
+                  "No hardware contacted.")
+            return 0
         if args.command == "doctor":
             config = Config(args.serial_port)
             checks = {
@@ -36,7 +57,8 @@ def main(argv: list[str] | None = None) -> int:
                 "serial_path_exists": config.serial_port.exists(),
                 "serial_permissions": os.access(config.serial_port, os.R_OK | os.W_OK),
             }
-            print(json.dumps({"checks": checks, "hardware_readiness": "UNVALIDATED",
+            from .diagnostics import host_details
+            print(json.dumps({"host": host_details(), "checks": checks, "hardware_readiness": "UNVALIDATED",
                               "gpio_adapter": "NOT CHECKED; no GPIO opened"}, indent=2))
             return 0 if all(checks.values()) else 1
         from .security.ssh_keys import prepare_key
@@ -49,6 +71,12 @@ def main(argv: list[str] | None = None) -> int:
         prepare_key(args.private_key, args.ssh_public_key, password)
         print("RSA public key validated; local key preparation complete.")
         return 0
+    except (TransportError, OpenOCDError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    except KeyboardInterrupt:
+        print("Interrupted; resources closed.", file=sys.stderr)
+        return 130
     except (OSError, ValueError, TypeError):
         print("Preparation failed: check paths, permissions, RSA format, passphrase and key "
               "consistency. Existing keys were not overwritten.", file=sys.stderr)

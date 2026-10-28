@@ -9,3 +9,7 @@ No real hardware, remote Pi changes, payload execution, boot environment changes
 tests without explicit authorization. Hardware tests must be opt-in, never default pytest.
 Do not infer safe probing from an OpenOCD configuration: reset event handlers write registers.
 Preserve existing private keys; never log key material or passwords.
+Diagnostic levels: doctor/default probe host-only; observe is explicit receive-only UART
+and still carries control-line opening risk. probe --jtag is deliberately disabled.
+OpenOCD accepts only fixed host Query enums, never legacy target configs or arbitrary Tcl.
+UBootSession printenv is an explicit interactive library operation, never passive observe.

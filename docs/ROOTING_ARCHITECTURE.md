@@ -76,3 +76,38 @@ firmware prerequisites, local API endpoints and Home Assistant behavior remain u
 Later gates: preserve autonomous heating through network/HA failure; permit HA
 192.168.2.25 and local DNS/NTP; test router outbound isolation after setup.
 No cloud shutdown or firmware update is implemented.
+
+## Second implementation session: diagnostic levels and protocol boundary
+Level 0 doctor now enumerates serial metadata, GPIO device names, model, OS/architecture
+and runs only fixed OpenOCD --version / noinit; adapter list; shutdown queries.
+The latter reports compiled drivers, not functional adapter compatibility. It never
+selects an adapter, loads config, or requests init. Default probe reports readiness only.
+Level 1 observe requires an explicit absolute device; opens closed pySerial with
+DTR/RTS inactive before open, all flow control disabled, no BREAK or write call.
+UART fixed at documented 115200 8N1; no dynamic changes. Software receive-only is
+not physical isolation: use a validated RX/GND-only connection if appropriate.
+Drivers may glitch lines on open; no electrical noninterference claim.
+See https://pyserial.readthedocs.io/en/latest/pyserial_api.html (open/RTS/DTR caveats).
+Capture capped at 1 MiB and 3600 seconds, default 64 KiB/30 seconds. Output escapes
+terminal controls; captured bytes may contain device secrets, so do not publish blindly.
+No capture file option yet. Timestamps are per received chunk.
+Level 2 JTAG remains disabled: every legacy adapter uses bcm2835gpio with reset pins;
+ed20.cfg:20 sources external target/imx27.cfg not included/pinned in this repository.
+ed20.cfg:21-22 reset-init/gdb-attach hooks and :34-117 initialization writes preclude
+using this board configuration for conservative identification. Nested script audit
+cannot be completed against an unspecified system OpenOCD installation.
+Level 3 remains disabled even with confirmation/compatibility flags in safety policy.
+No new bootloader transfer, memory write or payload executor exists.
+
+SerialTransport has injectable byte device and monotonic clock, partial writes,
+bounded reads/writes, context cleanup and receive-only rejection.
+UBootSession supports prompt synchronization and explicit interactive printenv only;
+no generic commands. Standalone U-Boot> plus idle read is a synchronization heuristic,
+not proof against deliberately crafted/delayed output. environment requires command
+echo and addmisc evidence; unsupported prompts time out. Hardware firmware command
+behavior remains unverified. Transcript stores bounded timestamp/direction/size metadata
+only, never response content. Returned environment bytes remain sensitive.
+OpenOCD runner merges stdout/stderr, uses selectors and a bounded buffer, finite
+deadline, new process session and kill/reap in finally. No arbitrary Tcl/config paths.
+See https://openocd.org/doc/html/Debug-Adapter-Configuration.html for adapter list;
+built-in driver presence is distinct from real GPIO/target validation.

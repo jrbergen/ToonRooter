@@ -12,7 +12,7 @@ Tasks are complete only with evidence and their acceptance criteria met.
   Acceptance: absent/valid/partial/invalid/mismatch/external keys and safe paths tested.
 - [ ] M1-03 Python 3.12/3.13/3.14 CI, install/build matrix and permission/failure injection.
   Acceptance: wheels install and tests pass across declared versions.
-- [ ] M2-01 Bounded bytes-only serial transport and fake transcripts.
+- [x] M2-01 Bounded bytes-only serial transport and fake transcripts.
   Acceptance: partial responses, deadlines, disconnect, unexpected prompts covered.
 - [ ] M2-02 Managed OpenOCD subprocess and U-Boot protocol.
   Acceptance: interruption/reaping/error paths; commands compared to baseline.
@@ -36,5 +36,11 @@ Test categories: default pure unit; simulated integration; explicitly opted-in
 Pi-host (no Toon); explicitly opted-in HIL (only category allowed to contact Toon).
 Do not add hardware tests to default collection that can perform I/O.
 
-Next task: M2-01 bounded serial transport with injected fake byte streams; alongside
-M1-03 expand failure injection and establish CI. No hardware execution needed.
+Next task: M2-02 remains partial: host-query OpenOCD management and U-Boot
+printenv protocol implemented, but no target startup or bootloader sequencing.
+Add reviewed operation plans and pinned nested-config/source provenance before
+disruptive bootstrapping. M2-03 remains entirely pending. M1-03 CI matrix added,
+not yet run remotely; permission/failure matrix remains pending.
+M3-01 partial: doctor expanded, observe implemented, live JTAG explicitly refused.
+No physical target identification/reset/transfer simulation is claimed: those target
+executors do not exist yet. Preserve this gate rather than testing unrelated mocks.

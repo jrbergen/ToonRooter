@@ -25,3 +25,29 @@ No tested recovery or universal restore exists. No real hardware tests performed
 Acceptance gate: verified device identity, asset compatibility, bounded transport,
 backup scope/checksums, explicit persistent-operation approval, normal-boot and
 independent heating verification. Never promise recovery based on serial access alone.
+
+## Updated evidence (second session)
+- S02: modern transport/protocol has deadline/size/partial/disconnect tests; legacy
+  code remains unreachable. Prompt recognition cannot prove command success.
+- S03: fixed host-query process manager now bounds logs/time and kills/reaps groups.
+  Target startup and bootloader orchestration remain disabled.
+- S04: verified from source ed20.cfg:20-22,34-117: nested unpinned imx27 config,
+  gdb-attach reset init and reset-init register writes. Physical attach effects and
+  non-disruptive TAP IDCODE sequence are hardware-unverified. No live probe enabled.
+- S11 (Medium): pySerial open may glitch RTS/DTR (official API open notes).
+  Mitigation: closed construction, inactive lines, no flow control/write/BREAK;
+  residual physical risk documented, fake initialization asserts exact settings.
+- S12 (Medium): diagnostic output can include environment secrets / terminal escapes.
+  Transcripts metadata-only, UART CLI uses escaped bytes; no automatic persistent log.
+- S09: modern OpenOCD accepts enum queries only, no files/scripts/adapter input.
+  This is a structural allowlist, not a forbidden-word scan.
+
+## Power loss and recovery evidence
+Source-derived inference: during JTAG/RAM boot stage, loss likely discards loaded
+image and volatile environment. Original flash boot path is not explicitly written,
+but bootloader behavior, power-loss flash behavior and reboot recovery are unverified.
+During passwd/firewall/inittab/opkg writes, interruption may leave partial state;
+payload is not idempotent (duplicate authorized_keys and credential regeneration).
+No transaction or universal rollback. CPU halt/reset and init=/bin/sh boot interrupt
+normal thermostat services. No verified recovery or autonomous heating test exists.
+New implementation performs none of these state-changing actions.

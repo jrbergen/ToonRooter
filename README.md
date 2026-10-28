@@ -1,6 +1,7 @@
 # Python 3 modernization (in progress)
 
-The supported entry point is now the host-only CLI. Hardware rooting is disabled.
+The CLI supports host diagnostics and explicit receive-only UART observation.
+Hardware rooting and live JTAG remain disabled.
 Historical instructions below describe unvalidated legacy software; do not use them
 as modern deployment instructions.
 
@@ -10,11 +11,16 @@ Requires Python >=3.12 (tested locally on 3.14.8). In a virtual environment:
 python3 -m venv .venv
 .venv/bin/python -m pip install -e '.[dev]'
 .venv/bin/toonrooter doctor
+.venv/bin/toonrooter probe
+# Only when intentionally opening a serial device:
+.venv/bin/toonrooter observe --serial /dev/serial0 --timeout 30 --max-bytes 65536
 .venv/bin/toonrooter keys --private-key ./id_rsa --encrypt
 .venv/bin/python -m pytest
 .venv/bin/ruff check .
 ```
 
+Observe sends no bytes, but adapter drivers may glitch control lines on open.
+Do not run observation against connected hardware without assessing that risk.
 Doctor only inspects the host; a nonzero result means a missing prerequisite,
 not a failed Toon connection. Keys writes local files only and never overwrites keys.
 Do not run as root. See [implementation plan](docs/IMPLEMENTATION_PLAN.md),
