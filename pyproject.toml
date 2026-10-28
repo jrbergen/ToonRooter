@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "toonrooter"
+version = "0.1.0"
+description = "Conservative host tools for Toon 1 rooting preparation"
+requires-python = ">=3.12"
+dependencies = ["cryptography>=42", "pyserial>=3.5"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.9", "build>=1"]
+
+[project.scripts]
+toonrooter = "toonrooter.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["toonrooter*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["simulated: simulated protocol integration", "pi_host: opt-in Pi checks without Toon", "hardware: opt-in real Toon tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+include = ["toonrooter/**/*.py", "tests/**/*.py"]

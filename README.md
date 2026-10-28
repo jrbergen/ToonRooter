@@ -1,3 +1,27 @@
+# Python 3 modernization (in progress)
+
+The supported entry point is now the host-only CLI. Hardware rooting is disabled.
+Historical instructions below describe unvalidated legacy software; do not use them
+as modern deployment instructions.
+
+Requires Python >=3.12 (tested locally on 3.14.8). In a virtual environment:
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -e '.[dev]'
+.venv/bin/toonrooter doctor
+.venv/bin/toonrooter keys --private-key ./id_rsa --encrypt
+.venv/bin/python -m pytest
+.venv/bin/ruff check .
+```
+
+Doctor only inspects the host; a nonzero result means a missing prerequisite,
+not a failed Toon connection. Keys writes local files only and never overwrites keys.
+Do not run as root. See [implementation plan](docs/IMPLEMENTATION_PLAN.md),
+[architecture](docs/ROOTING_ARCHITECTURE.md) and [audit](docs/SECURITY_AUDIT.md).
+
+---
+
 # ToonRooter
 
 ## What it does
