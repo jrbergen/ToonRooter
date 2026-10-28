@@ -6,7 +6,6 @@ import stat
 from importlib.resources import files
 from pathlib import Path, PurePosixPath
 
-
 MANIFEST = json.loads(files("toonrooter").joinpath("data/assets.json").read_text())
 
 
@@ -65,11 +64,14 @@ def audit_configs(root: Path) -> dict:
     script is unresolved, so no matching hash can grant live permission.
     """
     validate_inventory(root)
+    from .hardware.config_review import review_chain
+    reference = review_chain()
     return {
+        "pinned_reference": reference,
         "review": "static-only", "live_permitted": False,
         "includes": {"assets/boards/ed20.cfg": ["target/imx27.cfg"]},
         "unresolved": ["target/imx27.cfg"],
         "effects": ["reset run", "reset halt", "gdb-attach: reset init",
                     "reset-init: ed20_init", "mww", "mwb", "reg"],
-        "reason": "Unpinned external target chain; reset and register/memory writes",
+        "reason": "Pinned 0.12.0 reference reviewed; installed target chain unspecified; disruptive writes",
     }

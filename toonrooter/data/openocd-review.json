@@ -1,0 +1,14 @@
+{
+  "version": "0.12.0",
+  "source": "https://raw.githubusercontent.com/openocd-org/openocd/v0.12.0/tcl/target/imx27.cfg",
+  "files": {
+    "target/imx27.cfg": "bb5df922934f7d865b5cd65a2243855b011a06e278117cfea35c83a0406e9f17"
+  },
+  "includes": {
+    "target/imx27.cfg": []
+  },
+  "cpu_id": "0x07926121",
+  "etb_id": "0x1b900f0f",
+  "cpu": "arm926ejs",
+  "live_permitted": false
+}

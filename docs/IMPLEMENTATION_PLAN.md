@@ -63,3 +63,17 @@ executors do not exist yet. Preserve this gate rather than testing unrelated moc
 Next recommended task: M2-02c offline provenance/config-chain investigation and
 M2-03c receiver capability specification from representative firmware shell data.
 Do not wire simulated exchange contracts into live serial/OpenOCD paths.
+
+## M2-02c reference review acceptance update
+- [x] M2-02c-1 Complete reference Tcl chain (OpenOCD v0.12.0), optional exact installed
+  target comparison, effective reset policy review.
+- [x] M2-02c-2 Raw ARM vector/link analysis, provenance limits and existing-console route plan.
+- [x] M2-02c-3 Real legacy-format comparison and offline gzip/base64 adapter tests.
+- [ ] M2-02c-4 Actual per-command response contracts, controlled config variables,
+  compiled-version/firmware compatibility and separately authorized executor.
+Parent M2-02c remains partial: its acceptance includes live execution support which
+source/mocks cannot establish. Historical provenance alone is not an absolute blocker.
+Next: M2-03c legacy-compatible simulated shell transfer with separate acknowledgements,
+bounded staging/status and optional checksum capability negotiation. No TRSIM1 or
+sha256sum installation requirement. Parallel independent task: M4-01 candidate modern
+Pi host/OpenOCD/backend installation validation plan, no Toon.

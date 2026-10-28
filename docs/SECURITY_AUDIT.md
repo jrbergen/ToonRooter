@@ -66,3 +66,19 @@ disappear, but bundled binary behavior is not established. No complete backup,
 verified recovery, package rollback, or autonomous heating evidence exists.
 New simulated payload receiver stores only bounded host memory; it cannot demonstrate
 safe target storage, interrupted extraction cleanup or idempotent installation.
+
+## M2-02c findings
+S04/S16: v0.12.0 Tcl reference chain resolved/pinned; installed script comparison
+optional. Other versions/compiled handlers/examination/reset effects unverified.
+S18 (High): target/imx27.cfg reset_config overrides adapter reset_config none.
+Source ordering proves intent, not physical waveform. Exact reference tests added;
+live probe disabled.
+S13: ARM vectors/link address strengthen architecture inference, not provenance.
+NAND/BBT/write routines present; RAM-loaded code may still alter persistent state.
+S19 (Medium): prior host USTAR alone incompatible with legacy tar zxf gzip input.
+New offline adapter round-trips gzip/base64 and original payload contents.
+S15: TRSIM1 is synthetic, not a Toon receiver. No target SHA256 utility requirement.
+Payload review: init generates host keys based on mount flags and depends on awk/
+start-stop-daemon; skips service when /var/service/dropbear exists. Replacing it
+without real userspace fixtures would introduce unsupported assumptions.
+Architecture contains comparison decisions and staged hardware stops/recovery limits.

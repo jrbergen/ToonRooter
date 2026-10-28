@@ -261,3 +261,8 @@ toonrooter package-payload --repository . --ssh-public-key ./id_rsa.pub --output
 The archive is deterministic and independently verified; original scripts are unchanged.
 Known asset hashes establish identity, not trustworthy provenance. Live boot, JTAG and
 payload transfer remain disabled. The transfer receiver currently exists only in simulation.
+
+asset-audit --openocd-scripts PATH compares installed target scripts to the reviewed
+OpenOCD 0.12.0 reference, without opening hardware. Matching source is not approval.
+package-payload --format legacy-base64 emits historical gzip/base64 format locally.
+It does not transmit or verify target receipt; TRSIM1 remains simulation-only.

@@ -78,3 +78,28 @@ Final validation: Python 3.14.8, 91 passed / 1 skipped (existing real-pySerial P
 test skipped because dependency unavailable in this environment). Ruff passed,
 compileall passed, sdist/wheel builds passed, git diff --check passed. Asset JSON
 is included as package data. No claim of HIL, modern Pi OS or multi-Python validation.
+
+## Fourth session — 2026-10-28: M2-02c architecture evaluation
+Baseline master 5586bbc; untracked .github/ and .idea/ preserved. Baseline tests:
+91 passed/1 skipped. Read docs/source and reviewed legacy execution/binary/history,
+bundled Dropbear init/default. Retrieved inert OpenOCD v0.12.0 target/imx27.cfg,
+pinned source/hash/license; no further includes. Target overrides adapter reset policy.
+Implemented reference/installed config comparison, raw ARM vector/link analysis,
+existing-console-first route planner (banner != authentication), offline gzip/base64
+adapter matching legacy input. asset-audit optionally --openocd-scripts;
+package-payload optionally --format legacy-base64. No live executor enabled.
+Files: hardware/config_review.py, boot/compatibility.py, legacy_wire.py,
+data/openocd-review.json, data/openocd-0.12.0/*, assets.py, cli.py, pyproject.toml,
+tests/test_compatibility.py and persistent docs/README/AGENTS.
+Completed M2-02c-1/2/3; parent partial for live response/compatibility/authorization.
+Decision: retain established console/JTAG fallback, do not replace boot image/init.
+Synthetic TRSIM1 excluded from real path. Host tar now has explicit legacy conversion.
+Unknown: BBT startup effects, real firmware/reset timing, OpenOCD C behavior, modern
+Pi drivers, receiver utilities/mount/echo handling. No real Pi/Toon accessed.
+Next exact task M2-03c legacy-compatible shell transfer simulation with bounded
+staging/status and optional available checksum; M4-01 modern host setup research.
+
+Final validation: isolated environment Python 3.14.8 with pySerial3.5/Ruff0.17.3:
+105 passed, zero skipped (PTY included). Ruff, compileall, sdist/wheel build and
+git diff --check passed. Verified reference/manifest/license resources in wheel.
+No other Python versions or real hardware validated; no commits/pushes.

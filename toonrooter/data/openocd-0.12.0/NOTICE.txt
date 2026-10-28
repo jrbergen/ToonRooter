@@ -1,0 +1,4 @@
+target/imx27.cfg is an unmodified OpenOCD v0.12.0 source file.
+Source: https://raw.githubusercontent.com/openocd-org/openocd/v0.12.0/tcl/target/imx27.cfg
+Retrieved 2026-10-28 for static review only; GPL-2.0-or-later, per SPDX header.
+License text is in COPYING. The reference is not an enabled execution configuration.

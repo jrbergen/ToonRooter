@@ -28,4 +28,4 @@ line-length = 100
 include = ["toonrooter/**/*.py", "tests/**/*.py"]
 
 [tool.setuptools.package-data]
-toonrooter = ["data/*.json"]
+toonrooter = ["data/*.json", "data/openocd-0.12.0/target/*.cfg", "data/openocd-0.12.0/COPYING", "data/openocd-0.12.0/NOTICE.txt"]

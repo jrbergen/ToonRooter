@@ -30,9 +30,11 @@ def parser() -> argparse.ArgumentParser:
     probe.add_argument("--jtag", action="store_true")
     audit = commands.add_parser("asset-audit", help="Host-only pinned asset validation")
     audit.add_argument("--repository", type=Path, required=True)
+    audit.add_argument("--openocd-scripts", type=Path)
     payload = commands.add_parser("package-payload", help="Host-only archive preparation")
     payload.add_argument("--repository", type=Path, required=True)
     payload.add_argument("--ssh-public-key", type=Path, required=True)
+    payload.add_argument("--format", choices=["host-tar", "legacy-base64"], default="host-tar")
     payload.add_argument("--output", type=Path, required=True)
     return result
 
@@ -44,11 +46,21 @@ def main(argv: list[str] | None = None) -> int:
             from .assets import audit_configs
             report = audit_configs(args.repository)
             if args.command == "asset-audit":
+                from .boot.compatibility import analyze_bootloader
+                from .hardware.config_review import review_chain
+                report["bootloader"] = analyze_bootloader(args.repository)
+                if args.openocd_scripts is not None:
+                    report["installed_reference"] = review_chain(
+                        installed_scripts=args.openocd_scripts)
+                    report["unresolved"] = []
                 print(json.dumps(report, indent=2))
             else:
                 from .payload import package
                 from .security.ssh_keys import read_regular
                 data = package(args.repository, read_regular(args.ssh_public_key))
+                if args.format == "legacy-base64":
+                    from .legacy_wire import prepare_legacy_wire
+                    data = prepare_legacy_wire(data).encoded
                 fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
                 with os.fdopen(fd, "wb") as stream:
                     stream.write(data)

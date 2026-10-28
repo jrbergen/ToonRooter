@@ -171,3 +171,106 @@ Toon shell requirements also include BusyBox ash extensions ([[ ]]), mknod, sed,
 openssl DES crypt, opkg, update-rc.d. These are not assumed on unknown firmware.
 Modern Pi differences remain unresolved: bcm2835gpio peripheral bases and old
 adapter_khz syntax are historical, not a validated modern GPIO implementation.
+
+## M2-02c reference review and decisions — 2026-10-28
+This supersedes earlier statements that no nested reference could be resolved.
+It does NOT establish the configuration of any installed OpenOCD or real device.
+
+### Complete reference chain and binary evidence
+Original adapter/rpi3.cfg -> boards/ed20.cfg -> target/imx27.cfg.
+Retrieved unmodified OpenOCD v0.12.0 target/imx27.cfg to
+toonrooter/data/openocd-0.12.0/target/imx27.cfg; GPL-2.0-or-later COPYING/NOTICE
+included. Source/hash are in data/openocd-review.json. It has no further includes.
+review_chain compares exact bytes, optionally against an installed scripts directory.
+It never evaluates Tcl. Compiled OpenOCD C handlers/startup interpreter are not pinned.
+CLI asset-audit --repository . --openocd-scripts /usr/share/openocd/scripts
+uses the actual host directory, with no OpenOCD process or device access.
+
+Critical ordering: target sets trst_and_srst srst_pulls_trst AFTER adapter reset_config
+none. Assuming adapter reset policy remains effective was incorrect. Source review
+establishes intent, not measured signaling. Defaults: little-endian ARM926EJ-S,
+ETB TAP 0x1b900f0f, CPU TAP 0x07926121, IR length 4.
+Conditional CHIPNAME/ENDIAN/ETBTAPID/CPUTAPID overrides must be controlled by a future
+executor. Work area virtual/physical 0xffff4c00, size 0x8000, backup enabled;
+DCC downloads and ETM/ETB debug setup. Work-area backup is not a target backup.
+Board defines NAND/HWECC; definition is not an erase/program command. Board reset
+hooks write GPIO/AIPS/clocks/SDRAM/CPU state. No explicit flash write in bootstrap
+Python/OpenOCD source. Examination and compiled reset code still need validation.
+Source: https://raw.githubusercontent.com/openocd-org/openocd/v0.12.0/tcl/target/imx27.cfg
+
+Binary unchanged, 166504 bytes, hash recorded earlier. At 0x00: ea000012 then seven
+e59ff014 words; at 0x40/0x44: a1f00000/a1f00000. These strongly indicate raw
+little-endian ARM exception vectors/link address, not ELF metadata/full disassembly.
+analyze_bootloader checks signatures/address plus pinned hash, i.MX27 CPU text and
+2017 U-Boot version string. Bootcmd string runs boot_nand; boot_nand runs argument
+macros then NAND read and bootm. NAND write/erase/BBT routines are present too.
+Presence does not prove execution, but RAM loading cannot establish absence of
+persistent side effects. Exact source/build, board revision and BBT startup behavior
+remain unknown. No replacement binary is justified. Perfect provenance is not an
+unconditional development blocker: examine actual runtime risks before authorized HIL.
+
+### Behavioral and alternative decision record
+| Concern | Historical behavior | Decision / current implementation | Evidence, assumptions and tests |
+|---|---|---|---|
+| Existing console | Password access before JTAG | Preserve preference; plan_route avoids resets/RAM image after supported access established | rooter.py:56-92; banner != authentication; route tests |
+| Unsupported firmware | JTAG RAM U-Boot fallback | Retain design, live disabled | Issue26 reports successful comparable setup, not this device |
+| Initialization | soft_reset_halt then reset halt | Preserve reference until measurements justify removing either | rooter.py:213-218, ed20_init; removing reset may break SDRAM setup |
+| Shell boot | unsaved addmisc with init=/bin/sh, boot_nand | Preserve principle | Inspect real macros first; current synthetic batch simulator omits passwords/individual acknowledgements; not production protocol |
+| GPIO | bcm2835gpio direct memory access, old adapter_khz syntax | Evaluate updated bcm2835gpio and linuxgpiod on Pi, defer replacement | Official OpenOCD supports both; no measured Toon superiority |
+| USB adapter | Board comments report JLink use | Credible fallback, defer | Voltage/reset wiring/new adapter tests needed; new cost/setup |
+| NFS recovery | Community ToonRecovery boots recovery environment | Defer as diagnostic alternative | More image/network dependencies; not verified rollback |
+| Network exploit | Legacy Root-A-Toon services | Defer for supplied firmware | User observed no legacy-port fallback; no invented exploit |
+| Persistent SSH | Bundled IPKs and edits | Retain reference, do not deploy blindly | Actual existing services/tools/space unknown; reuse sshd only if identified |
+| Archive | gzip tar over base64 | Preserve host integrity checks, adapt wire format | Prior host tar alone incompatible with tar zxf; round-trip tests added |
+| Receiver checks | Prompt only, no checksum/status | Improve optional capability negotiation next | No unsupported sha256sum requirement |
+| TRSIM1 | No historical equivalent | Keep isolated synthetic test, excluded from live plan | No Toon receiver exists; not evidence of real transfer/extraction |
+
+Recommendation: existing supported U-Boot console first; otherwise historical JTAG
+RAM-U-Boot is the strongest supported hardware fallback. No evidence supports replacing
+image/SoC initialization with a novel method. Improve acknowledgements/staging first.
+Sources:
+https://github.com/martenjacobs/ToonRooter/issues/26
+https://github.com/ToonSoftwareCollective/ToonRecovery
+https://openocd.org/doc-release/html/Debug-Adapter-Configuration.html
+Official docs describe bcm2835gpio direct-register access, linuxgpiod character-device
+bitbanging and deprecated sysfs GPIO. Prefer evaluating linuxgpiod over reviving sysfs,
+but compilation or a newer interface proves neither electrical safety nor Toon timing.
+
+### Payload and practical transfer findings
+Inspected bundled Dropbear IPK init/default without execution. Init requires awk,
+start-stop-daemon, dropbearkey and /proc/mounts; selects /var/lib/dropbear on read-only
+root, /etc/dropbear otherwise, generates missing/empty RSA host keys, and skips
+startup if /var/service/dropbear exists. Defaults can supply extra server arguments.
+Postinst alternatives/update-rc.d and existing daemons may conflict. Removal scripts
+delete host keys. Existing nonempty host keys are normally preserved by init.
+patch_toon.sh duplicates authorized_keys, regenerates password, makes non-atomic sed
+edits and calls the wrong postinst for SFTP failure. Copies cover two files only.
+A replacement installer must first identify actual tools, sshd and opkg state.
+Do not assume modern utilities, systemd, rename durability or package rollback.
+
+legacy_wire.prepare_legacy_wire verifies host bundle, removes host-only manifest,
+emits deterministic gzip USTAR plus 76-column base64.encodebytes matching legacy
+base64.encode. It returns original receiver command as inert bytes only.
+package-payload --format legacy-base64 writes this representation locally.
+This proves host format equivalence, NOT target receipt. Historical fixed 60-second
+timeout, UART echo/canonical handling, Ctrl-D semantics, root mount/free space and
+BusyBox capabilities remain unverified. Direct extraction into / is not adopted.
+Next receiver design should stage on a confirmed mount and capture explicit status,
+negotiate available checksum/byte count, and stop before extraction/execution on failure.
+Do not require installing a receiver or new SHA256 utility merely for design elegance.
+
+### Separately authorized hardware-validation stages
+No stage executed. Stop on unexpected identity/reset, wiring uncertainty, timeout,
+checksum mismatch, heating failure or failure to restore normal boot.
+| Stage | Expected observation / possible effects | Stop/recovery |
+|---|---|---|
+| 1 Pi host | OS/Python/OpenOCD/drivers and UART conflicts inspected | Fix host offline; no target attached |
+| 2 Electrical/UART | Verified voltage/wiring, passive banner; open may glitch lines | Stop/disconnect powered-down if unsafe; no reset just to obtain banner |
+| 3 JTAG identity | Reviewed adapter, expected TAPs; attach may change debug state | Stop unknown IDs/reset; no automatic init |
+| 4 Initialization | Authorized halt/reset, exact OpenOCD results recorded | Heating suspended; reboot recovery remains unverified |
+| 5 Volatile boot | Exact image length/address verified, supported UART banner | Stop mismatch; no flash writes; recovery still uncertain |
+| 6 Linux console | Verified shell and boot macros | init=/bin/sh bypasses thermostat services |
+| 7 Backups | Environment/files/mount map captured and checked | Report coverage; no universal restore |
+| 8 Transfer | Tool/mount/free-space preflight, staged length/checksum/status | No execution after partial transfer; reviewed cleanup only |
+| 9 Persistent install | Explicit plan confirmation and supported service/userspace | Stop first error; rollback not established |
+| 10 Reboot/verify | Normal UI, autonomous heating and SSH | Stop integration/cloud changes if heating fails; no destructive retries |

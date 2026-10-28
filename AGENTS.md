@@ -17,3 +17,6 @@ BootSequence and SimulatedTransfer accept only their concrete in-memory endpoint
 Do not connect simulator contracts to live devices. Asset hashes permit inspection/
 packaging/simulation only, never execution. New payload archives must be independently
 verified and never extracted/executed during host preparation.
+OpenOCD v0.12.0 Tcl chain is vendored for static review only; target reset_config
+overrides adapter reset_config none. Matching hashes never authorize execution.
+Prefer established supported console access before disruptive JTAG fallback planning.
