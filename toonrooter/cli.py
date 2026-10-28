@@ -18,6 +18,15 @@ def parser() -> argparse.ArgumentParser:
     commands = result.add_subparsers(dest="command", required=True)
     doctor = commands.add_parser("doctor", help="Inspect host only; never opens serial or GPIO")
     doctor.add_argument("--serial-port", type=Path, default=Path("/dev/serial0"))
+    doctor.add_argument("--repository", type=Path)
+    doctor.add_argument("--openocd-scripts", type=Path)
+    doctor.add_argument("--ssh-public-key", type=Path)
+    doctor.add_argument("--adapter", choices=["bcm2835gpio", "linuxgpiod"], default="bcm2835gpio")
+    simulation = commands.add_parser("simulate-root", help="In-memory legacy workflow; no hardware")
+    simulation.add_argument("--repository", type=Path, required=True)
+    simulation.add_argument("--ssh-public-key", type=Path, required=True)
+    simulation.add_argument("--authorize-simulated-install", action="store_true")
+    simulation.add_argument("--authorize-simulated-reboot", action="store_true")
     keys = commands.add_parser("keys", help="Prepare local RSA keys; never contacts the Toon")
     keys.add_argument("--private-key", type=Path, default=Path("id_rsa"))
     keys.add_argument("--ssh-public-key", type=Path)
@@ -42,6 +51,18 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
+        if args.command == "simulate-root":
+            from dataclasses import asdict
+
+            from .security.ssh_keys import read_regular
+            from .testing.rooting import SimulatedRig
+            from .workflow import RootSimulation
+            result = RootSimulation(SimulatedRig()).run(
+                args.repository, read_regular(args.ssh_public_key),
+                authorize_install=args.authorize_simulated_install,
+                authorize_reboot=args.authorize_simulated_reboot)
+            print(json.dumps(asdict(result), indent=2))
+            return 0
         if args.command in ("asset-audit", "package-payload"):
             from .assets import audit_configs
             report = audit_configs(args.repository)
@@ -91,10 +112,17 @@ def main(argv: list[str] | None = None) -> int:
                 "serial_path_exists": config.serial_port.exists(),
                 "serial_permissions": os.access(config.serial_port, os.R_OK | os.W_OK),
             }
+            from .deployment import readiness
             from .diagnostics import host_details
-            print(json.dumps({"host": host_details(), "checks": checks, "hardware_readiness": "UNVALIDATED",
-                              "gpio_adapter": "NOT CHECKED; no GPIO opened"}, indent=2))
-            return 0 if all(checks.values()) else 1
+            host = host_details()
+            report = readiness(serial=config.serial_port, host=host, repository=args.repository,
+                               scripts=args.openocd_scripts, key=args.ssh_public_key,
+                               adapter=args.adapter)
+            print(json.dumps({"host": host, "checks": checks, "deployment": report,
+                              "hardware_readiness": "UNVALIDATED",
+                              "gpio_adapter": "Metadata only; no GPIO opened"}, indent=2))
+            return 0 if all(checks.values()) and not any(
+                c["status"] == "FAIL" for c in report) else 1
         from .security.ssh_keys import prepare_key
 
         password = None

@@ -103,3 +103,36 @@ Final validation: isolated environment Python 3.14.8 with pySerial3.5/Ruff0.17.3
 105 passed, zero skipped (PTY included). Ruff, compileall, sdist/wheel build and
 git diff --check passed. Verified reference/manifest/license resources in wheel.
 No other Python versions or real hardware validated; no commits/pushes.
+
+## Fifth session — 2026-10-28: host integration/deployment
+Baseline master b8217b4; reviewed commit contents/acceptance, retained .idea/.
+Existing untracked .github/workflows/tests.yml is valid project CI, now updated with
+wheel-install smoke check and prepared to be included in the next authorized commit.
+No git staging/commit/push performed. Baseline system tests:104 pass/1 PTY skip.
+Implemented workflow.py and testing/rooting.py: integrated source-derived boot/root
+simulation with real transport, protocol parser, package and gzip/base64 bytes, separate
+phase statuses/authorizations, fixed installation checks and synthetic reboot/SSH.
+CLI simulate-root uses in-memory fixture only. Existing root/probe--jtag stay disabled.
+deployment.py/doctor: structured release/adapter/OS/model/dependency/UART/GPIO/key/
+asset/script checks without device open. Added scripts/install-host.sh and DEPLOYMENT.md.
+Selected candidate Pi OS Lite64 Trixie, Python3.13, distro OpenOCD0.12; no real Pi tested.
+Changes: CLI, new workflow/testing/deployment modules, new test modules, installer,
+CI and persistent docs. Original assets/payload unchanged; no replacement target utility.
+M2-02d/M2-03d/M4-01a complete; parent live/receiver/physical deployment tasks partial.
+Source-derived pipeline status is NOT target integrity. IPK script error handling,
+normal thermostat/heating, electrical, actual OpenOCD responses/firmware and
+serial terminal semantics remain blockers. Only simulation backend exists.
+Next exact action: separately authorized Pi-only install/doctor with Toon disconnected;
+collect host release/adapter/config/UART results before any electrical/target work.
+
+Final verification (continued): **135 passed, zero skipped** on Python 3.14.8 and
+isolated Python 3.13.12 (selected deployment minor version). Both include PTY.
+Ruff and compileall pass; sdist/wheel build passes; shell installer syntax and
+git diff --check pass. Installed final wheel into /tmp Python3.13 venv and ran
+simulate-root outside checkout successfully; packaged target reference present.
+Python3.13 interpreter/dependencies installed only in task-specific /tmp locations.
+Remote CI and physical Pi remain untested; Python3.12 matrix run remains pending.
+Added explicit regression: tar status zero does not detect changed valid archive contents.
+Fixture no longer invents receiver-side host-hash comparisons. Source protocol reads
+version line then sends password immediately, without extra password-prompt wait.
+No actual UART/GPIO/target OpenOCD/SSH or payload execution; no staging/commit/push.

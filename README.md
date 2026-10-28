@@ -266,3 +266,9 @@ asset-audit --openocd-scripts PATH compares installed target scripts to the revi
 OpenOCD 0.12.0 reference, without opening hardware. Matching source is not approval.
 package-payload --format legacy-base64 emits historical gzip/base64 format locally.
 It does not transmit or verify target receipt; TRSIM1 remains simulation-only.
+
+For current Raspberry Pi OS Lite/Trixie setup and isolated installation, see
+[deployment instructions](docs/DEPLOYMENT.md). The host-only simulate-root command
+rehearses the source-derived workflow, including legacy gzip/base64 transfer,
+installation and reboot verification using an in-memory fixture. Live root execution
+is still disabled. Doctor now reports PASS/FAIL/UNKNOWN/HARDWARE_REQUIRED separately.

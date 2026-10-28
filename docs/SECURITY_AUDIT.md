@@ -82,3 +82,19 @@ Payload review: init generates host keys based on mount flags and depends on awk
 start-stop-daemon; skips service when /var/service/dropbear exists. Replacing it
 without real userspace fixtures would introduce unsupported assumptions.
 Architecture contains comparison decisions and staged hardware stops/recovery limits.
+
+## Host integration milestone
+S20 (High): a returned Linux prompt or tar pipeline status does not verify receipt
+or successful rooting. Integrated simulation labels transfer status as weaker than
+target checksum, blocks installation on nonzero/missing status, and stops before
+reboot on failed installation/file checks. Real script may ignore IPK failures:
+true SSH/daemon/key/heating postconditions remain hardware gates.
+S21 (Medium): binary 0.12.0 version alone does not bind compiled handlers or package
+patches. Doctor checks release profile/adapter and optional exact scripts but always
+reports target compatibility HARDWARE_REQUIRED. No global unsafe bypass added.
+Authorization is phase-specific in simulation; only concrete in-memory rig accepted.
+No target shell operations, live JTAG or SSH execution backend is connected.
+Timeout/disconnect/incomplete archive/error/interruption tests ensure no install after
+failed transfer and no reboot after failed checks. No target rollback is claimed.
+Installer changes venv only; manual apt/UART/Bluetooth changes are documented for a
+separately authorized host setup. CI file is project-relevant, IDE files remain excluded.

@@ -274,3 +274,68 @@ checksum mismatch, heating failure or failure to restore normal boot.
 | 8 Transfer | Tool/mount/free-space preflight, staged length/checksum/status | No execution after partial transfer; reviewed cleanup only |
 | 9 Persistent install | Explicit plan confirmation and supported service/userspace | Stop first error; rollback not established |
 | 10 Reboot/verify | Normal UI, autonomous heating and SSH | Stop integration/cloud changes if heating fails; no destructive retries |
+
+## Host execution integration milestone
+Commit b8217b4 was inspected: all 17 files and the required target cfg are tracked.
+It completed reference-source/format analysis, not M2-02c live execution acceptance.
+Baseline in this environment: 104 passed/1 skipped before using the isolated venv.
+
+RootSimulation now joins the real package/wire preparer, SerialTransport and
+UBootSession through one in-memory SimulatedRig. It validates inputs before
+target actions; supports established supported U-Boot/password path or JTAG fallback;
+checks synthetic TAP IDs; preserves soft_reset_halt/reset halt/load/resume ordering;
+logs in via historical passwords; reads addmisc; sends setenv and boot_nand separately;
+awaits Linux prompt; streams actual 76-column gzip/base64 lines, Ctrl-D/newline;
+checks explicit shell phase status; requires distinct simulated install/reboot consent;
+performs fixed file checks then simulated normal boot/SSH check. No retry; finally
+closes serial and rig/OpenOCD resources. Logs contain phase names only.
+
+Synthetic fixture interprets fixed commands, reconstructs/decompresses archive in memory,
+while tests compare original payload bytes independently. It never extracts onto host disk or runs scripts.
+OpenOCD messages, password availability, shell status and SSH/heating observations are
+synthetic. It does not establish a particular real OpenOCD response contract.
+The legacy receiver has no checksum acknowledgement. Added printf status reports
+tar's status, not the entire pipeline or corruption-free receipt. The real original
+script can ignore package errors; status zero and executable/file checks are insufficient
+installation verification. Target key contents, daemon startup/authentication and
+autonomous heating still require physical/integration verification. No automatic
+cleanup/reboot after failure; partial target state cannot be rolled back by host close.
+TRSIM1 remains isolated and is not used by this pipeline. No additional hashing utility.
+
+Doctor now inspects OS/Python/package metadata, stable serial alias/access and
+kernel console conflicts, GPIO access, optional asset/script/key inputs and fixed
+OpenOCD host queries. It distinguishes PASS/FAIL/UNKNOWN/HARDWARE_REQUIRED.
+UART overlays/Bluetooth and userspace ownership are flagged for review; no dynamic
+service changes or pin operations. Host binary release/adapter checks cannot grant
+target compatibility. Deployment candidate and manual commands are in DEPLOYMENT.md.
+Existing generic simulation remains for earlier regression coverage, but is not
+another live executor. New end-to-end workflow supersedes it as the integration rehearsal.
+
+### Next separately authorized hardware step
+First run only the deployment/doctor procedure on Pi3 **with Toon disconnected**.
+Collect OS/model/Python/OpenOCD release/adapters/target-file hash/UART alias/console
+and permission results. Do not attach JTAG to compensate for a failed host check.
+After host review, electrical validation is separately authorized: power both devices
+off before wiring, confirm voltage and grounds, use historical pin table in README
+(BCM JTAG 11/25/10/9, UART physical 8 TX and 10 RX). Never connect Pi 5V to Toon VT.
+A qualified electrical check must establish compatible signal levels and power/ground
+arrangements; firmware success is not an electrical guarantee.
+First target observation would be receive-only UART open at 115200 8N1, no transmitted
+bytes or reset; modem-line glitches remain possible. Stop on uncertain wiring/voltage.
+First future disruptive target command would start the reviewed adapter/board OpenOCD
+profile, whose initialization/examination may change debug/reset state even before
+explicit soft_reset_halt. This remains unimplemented as a live backend and requires
+separate review/authorization. No verified universal recovery; stop rather than retry.
+
+### Explicit remaining blocker inventory
+| Category | Current boundary |
+|---|---|
+| Missing implementation | No live adapter/JTAG startup backend, firmware-specific response validation, real SSH verifier, staged receiver/rollback |
+| Host dependencies | Installer/doctor available; actual Pi apt packages, adapters, UART conflicts and group permissions not yet observed |
+| Target behavior | Bootloader BBT side effects, shell terminal modes, tool availability, storage/transfer behavior and heating autonomy unverified |
+| OpenOCD configuration | 0.12 reference chain reviewed; actual distro binary/patches/installed files and reset waveforms require validation |
+| Binary compatibility | Raw ARM/load/SoC evidence checked; target revision and startup effects remain uncertain |
+| Authorization | No real Pi/Toon operation authorized or performed this session; no general unsafe bypass |
+Local end-to-end tests pass on Python3.13.12 and3.14.8; this establishes host consistency,
+not electrical/hardware compatibility. Installer shell syntax and ordinary isolated
+pip/wheel deployment were checked, but installer has not been run on the physical Pi.

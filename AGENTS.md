@@ -20,3 +20,7 @@ verified and never extracted/executed during host preparation.
 OpenOCD v0.12.0 Tcl chain is vendored for static review only; target reset_config
 overrides adapter reset_config none. Matching hashes never authorize execution.
 Prefer established supported console access before disruptive JTAG fallback planning.
+RootSimulation is the integrated source-derived rehearsal, concrete in-memory rig only.
+Do not equate tar/printf status with target integrity or installation success.
+Pi3 deployment candidate is Lite64/Trixie Python3.13; scripts/install-host.sh only
+installs local host tools into venv. Physical Pi validation has not been performed.

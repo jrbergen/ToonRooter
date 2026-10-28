@@ -77,3 +77,21 @@ Next: M2-03c legacy-compatible simulated shell transfer with separate acknowledg
 bounded staging/status and optional checksum capability negotiation. No TRSIM1 or
 sha256sum installation requirement. Parallel independent task: M4-01 candidate modern
 Pi host/OpenOCD/backend installation validation plan, no Toon.
+
+## Host pipeline/deployment readiness update
+- [x] M2-02d End-to-end source-derived simulation spanning host preflight, optional JTAG
+  fallback, U-Boot/Linux, real legacy wire bytes, install/reboot consent and verification.
+  Acceptance: partial writes, phase failure/no-retry and cleanup tested; explicitly synthetic.
+- [x] M2-03d Legacy receiver simulation reconstructs gzip/base64 archive; transfer status
+  separated from target integrity, installation and SSH. No TRSIM1/new target utility.
+- [x] M4-01a Select Lite64/Trixie Python3.13 and distro OpenOCD0.12 candidate, implement
+  isolated installer, host-only readiness and reproducible deployment instructions.
+- [ ] M4-01b Execute and record installer/doctor on actual Pi3 WITHOUT Toon.
+- [ ] M2-03c remains partial: simulation directly models legacy extraction, not a
+  proven staged receiver on actual firmware. Tool/echo/mount/canonical/interrupt behavior pending.
+M2-02c-4 remains incomplete: real response contracts and live backend remain absent.
+M1-03: CI workflow reviewed/updated and prepared for version control; remote matrix
+not yet run. Host package validation is separate from hardware readiness.
+Next task: authorized M4-01b Pi-only deployment/doctor with Toon disconnected; independently
+finish M2-03c staged receiver/status simulation, validate actual utility fixture evidence.
+Do not unblock live execution by passing synthetic response tests.
