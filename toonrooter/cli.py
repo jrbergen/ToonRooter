@@ -28,12 +28,34 @@ def parser() -> argparse.ArgumentParser:
     observe.add_argument("--max-bytes", type=int, default=65536)
     probe = commands.add_parser("probe", help="Host readiness; live JTAG is disabled")
     probe.add_argument("--jtag", action="store_true")
+    audit = commands.add_parser("asset-audit", help="Host-only pinned asset validation")
+    audit.add_argument("--repository", type=Path, required=True)
+    payload = commands.add_parser("package-payload", help="Host-only archive preparation")
+    payload.add_argument("--repository", type=Path, required=True)
+    payload.add_argument("--ssh-public-key", type=Path, required=True)
+    payload.add_argument("--output", type=Path, required=True)
     return result
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
+        if args.command in ("asset-audit", "package-payload"):
+            from .assets import audit_configs
+            report = audit_configs(args.repository)
+            if args.command == "asset-audit":
+                print(json.dumps(report, indent=2))
+            else:
+                from .payload import package
+                from .security.ssh_keys import read_regular
+                data = package(args.repository, read_regular(args.ssh_public_key))
+                fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                with os.fdopen(fd, "wb") as stream:
+                    stream.write(data)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                print("Local archive verified. No transfer, extraction or execution performed.")
+            return 0
         if args.command == "observe":
             from .diagnostics import observe
             finite_timeout(args.timeout)

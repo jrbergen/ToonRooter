@@ -111,3 +111,63 @@ OpenOCD runner merges stdout/stderr, uses selectors and a bounded buffer, finite
 deadline, new process session and kill/reap in finally. No arbitrary Tcl/config paths.
 See https://openocd.org/doc/html/Debug-Adapter-Configuration.html for adapter list;
 built-in driver presence is distinct from real GPIO/target validation.
+
+## M2-02/M2-03 host implementation (third session)
+Current baseline master a7271f9; prior user commits retained. New modules:
+assets.py/data/assets.json, boot/sequence.py, payload.py, transfer.py.
+asset-audit and package-payload are host-only CLI commands. Installation includes
+the inventory JSON, but original assets must be supplied via --repository.
+Hashes bind identity only; all assets remain unreproduced-legacy/inventory-only.
+The only binary bootloader is raw u-boot.bin. file reports "data"; embedded string
+is U-Boot 2010.09 (Feb 15 2017 - 18:17:02). Added in a25023f048f6d61e69e416f9e67ab247a21c97a9.
+No ELF architecture metadata or reproducible source/build mapping identified.
+imx27/ARM compatibility is source-derived from ed20.cfg and legacy address, not
+binary-format proof. Execution requests are rejected even for matching hashes.
+Config inventory pins every original adapter/board byte. Static audit reports the
+known external include and effects; it does not evaluate Tcl or discover arbitrary
+dynamic includes. Unknown hash/directive fails inventory validation. External
+target/imx27.cfg remains unresolved; live config chain approval is impossible here.
+
+### Reviewed legacy sequence and proposed finite simulation contracts
+References: rooter.py:56-126,196-234; ed20.cfg:20-117.
+Each transition requires the previous state; no retries; failed exchange -> FAILED,
+closes endpoint, prohibits continuation. Successful history stores state/kind/size only.
+All current boot transitions are SIMULATED, never hardware validation.
+| Stage | Purpose/prerequisite | Evidence / proposed deadline | Effects / recovery |
+|---|---|---|---|
+| Host validation | pinned inventory before any exchange | all assets/paths/hash/size match | host-only; repair inputs and restart |
+| Identify | Toon1 i.MX27 only | simulator explicit identity / 10s | real attach effects unknown; live disabled |
+| JTAG init | legacy soft_reset_halt; reset halt | simulator halted / 10s | halt/reset/register init; heating interrupted; no automatic retry |
+| RAM load | initialized SDRAM; load_image at 0xa1f00000 | simulator exact length/address / 10s | RAM write; provenance unknown; reboot recovery unverified |
+| Resume/console | loaded image | supported U-Boot version and standalone prompt / 10s | target execution; legacy password step not executed by simulator |
+| Environment inspection | known prompt | echoed printenv, unique nonempty addmisc and prompt / 10s | active UART command; no saveenv; output never logged |
+| Shell boot | inspected addmisc | simulator exact Linux prompt / 10s | escaped setenv addmisc + init=/bin/sh, run boot_nand; heating services bypassed |
+Timeouts above are proposed bounds passed to deterministic simulation exchanges,
+not measured hardware timings. Simulator identity/load/halt acknowledgements are
+explicit synthetic contracts, not OpenOCD output parsers. No live executor exists.
+Command construction rejects unsupported addmisc syntax instead of guessing escaping.
+The physical sequence still requires source/firmware/config and hardware review.
+
+### Payload packaging and simulated transfer
+Host packaging validates exact original script/IPKs plus supplied RSA public key.
+USTAR archive uses sorted regular files, uid/gid/mtime zero, mode 0600 (script invoked
+with sh, not executable bit). Names remain payload/* including id_rsa.pub. Manifest
+records length/mode/SHA256. No extraction or execution. Independent verification
+checks pinned payload hashes and canonical archive bytes; no self-manifest-only trust.
+Path checks reject traversal and symlinks; bounds are 1 MiB per asset/archive.
+Local repository mutation during validation is not a supported adversarial trust boundary.
+
+Transfer is a simulation-only binary framing experiment: TRSIM1 length SHA256,
+bounded archive bytes, explicit VERIFIED length SHA256 response. This receiver does
+not exist on Toon; no claim of legacy compatibility. It exercises SerialTransport's
+actual partial-write loop, deadlines and disconnects against an in-memory receiver.
+No shell interpolation, target filesystem writes, tar extraction or executable step.
+States: PREPARED -> STARTED -> COMPLETED -> INTEGRITY_VERIFIED; errors -> FAILED.
+Execution/installation states are defined but unreachable; successful transfer != root.
+Legacy transfer uses base64/timeout/tar without checksum. A future real receiver
+must establish available sha256/base64/timeout utilities, echo/canonical settings,
+storage mount (RAM vs persistent), free space, cleanup and extraction behavior.
+Toon shell requirements also include BusyBox ash extensions ([[ ]]), mknod, sed,
+openssl DES crypt, opkg, update-rc.d. These are not assumed on unknown firmware.
+Modern Pi differences remain unresolved: bcm2835gpio peripheral bases and old
+adapter_khz syntax are historical, not a validated modern GPIO implementation.

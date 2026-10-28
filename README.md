@@ -250,3 +250,14 @@ This application is based on instructions and software written by:
 - klaphekje
 - rboers
 - other [domoticaforum.eu](https://www.domoticaforum.eu/viewtopic.php?f=101) users
+
+Host-only asset and payload preparation (does not root or contact a target):
+
+```sh
+toonrooter asset-audit --repository .
+toonrooter package-payload --repository . --ssh-public-key ./id_rsa.pub --output ./payload.tar
+```
+
+The archive is deterministic and independently verified; original scripts are unchanged.
+Known asset hashes establish identity, not trustworthy provenance. Live boot, JTAG and
+payload transfer remain disabled. The transfer receiver currently exists only in simulation.

@@ -1,0 +1,140 @@
+{
+  "schema": 1,
+  "assets": [
+    {
+      "id": "assets/adapters/rpi1.cfg",
+      "path": "assets/adapters/rpi1.cfg",
+      "sha256": "91329c84b2e868f776e79c006e7530e25dd0177afcc1b23c39339cb6e0129752",
+      "size": 1295,
+      "type": "config",
+      "hardware": "toon1-imx27",
+      "provenance": "unreproduced-legacy",
+      "verification": "inventory-only",
+      "permitted_operations": [
+        "inspect",
+        "package",
+        "simulate"
+      ]
+    },
+    {
+      "id": "assets/adapters/rpi2.cfg",
+      "path": "assets/adapters/rpi2.cfg",
+      "sha256": "933cc1728895a15210b3a396ba5bd0c64f24e6c849bce4f8ed94486254a1ba90",
+      "size": 1296,
+      "type": "config",
+      "hardware": "toon1-imx27",
+      "provenance": "unreproduced-legacy",
+      "verification": "inventory-only",
+      "permitted_operations": [
+        "inspect",
+        "package",
+        "simulate"
+      ]
+    },
+    {
+      "id": "assets/adapters/rpi3.cfg",
+      "path": "assets/adapters/rpi3.cfg",
+      "sha256": "3c76e34e11d9a24a9311e02eb9cc6d2decb53b691cd2526439147b763207919f",
+      "size": 1297,
+      "type": "config",
+      "hardware": "toon1-imx27",
+      "provenance": "unreproduced-legacy",
+      "verification": "inventory-only",
+      "permitted_operations": [
+        "inspect",
+        "package",
+        "simulate"
+      ]
+    },
+    {
+      "id": "assets/adapters/rpi4.cfg",
+      "path": "assets/adapters/rpi4.cfg",
+      "sha256": "2434e3675a55e15e72dc7a9321ab1f78a73bab3eb3a51186ad5e53d82c96a765",
+      "size": 1292,
+      "type": "config",
+      "hardware": "toon1-imx27",
+      "provenance": "unreproduced-legacy",
+      "verification": "inventory-only",
+      "permitted_operations": [
+        "inspect",
+        "package",
+        "simulate"
+      ]
+    },
+    {
+      "id": "assets/boards/ed20.cfg",
+      "path": "assets/boards/ed20.cfg",
+      "sha256": "e1d0daa1c8e1fbbf54aa9b8010e3de1cde7bbd34f956584de2d0a0835872e1b1",
+      "size": 3507,
+      "type": "config",
+      "hardware": "toon1-imx27",
+      "provenance": "unreproduced-legacy",
+      "verification": "inventory-only",
+      "permitted_operations": [
+        "inspect",
+        "package",
+        "simulate"
+      ]
+    },
+    {
+      "id": "assets/u-boot.bin",
+      "path": "assets/u-boot.bin",
+      "sha256": "5ff62c31c19265eff1160169c60594335ea727174002f667d9344ea9cb7882e0",
+      "size": 166504,
+      "type": "bootloader",
+      "hardware": "toon1-imx27",
+      "provenance": "unreproduced-legacy",
+      "verification": "inventory-only",
+      "permitted_operations": [
+        "inspect",
+        "package",
+        "simulate"
+      ]
+    },
+    {
+      "id": "payload/dropbear_2015.71-r0_qb2.ipk",
+      "path": "payload/dropbear_2015.71-r0_qb2.ipk",
+      "sha256": "e097a7db067f9fee3402238202e7b3d15a5f009fdb2235d60c85d7ac6eb5c0e0",
+      "size": 125640,
+      "type": "payload",
+      "hardware": "toon1-imx27",
+      "provenance": "unreproduced-legacy",
+      "verification": "inventory-only",
+      "permitted_operations": [
+        "inspect",
+        "package",
+        "simulate"
+      ]
+    },
+    {
+      "id": "payload/openssh-sftp-server_7.3p1-r10.0_qb2.ipk",
+      "path": "payload/openssh-sftp-server_7.3p1-r10.0_qb2.ipk",
+      "sha256": "b736f8d5214c515f6bf3b12d174c13c3a10aad85682b040b5f8b8db7dc2fdd33",
+      "size": 45894,
+      "type": "payload",
+      "hardware": "toon1-imx27",
+      "provenance": "unreproduced-legacy",
+      "verification": "inventory-only",
+      "permitted_operations": [
+        "inspect",
+        "package",
+        "simulate"
+      ]
+    },
+    {
+      "id": "payload/patch_toon.sh",
+      "path": "payload/patch_toon.sh",
+      "sha256": "47e9c73fc7dd6f6c04e7e61a6ddf8ab775e4daba9ca769ecc727e4d8cbe0b627",
+      "size": 1773,
+      "type": "payload",
+      "hardware": "toon1-imx27",
+      "provenance": "unreproduced-legacy",
+      "verification": "inventory-only",
+      "permitted_operations": [
+        "inspect",
+        "package",
+        "simulate"
+      ]
+    }
+  ]
+}

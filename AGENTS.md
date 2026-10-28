@@ -13,3 +13,7 @@ Diagnostic levels: doctor/default probe host-only; observe is explicit receive-o
 and still carries control-line opening risk. probe --jtag is deliberately disabled.
 OpenOCD accepts only fixed host Query enums, never legacy target configs or arbitrary Tcl.
 UBootSession printenv is an explicit interactive library operation, never passive observe.
+BootSequence and SimulatedTransfer accept only their concrete in-memory endpoints.
+Do not connect simulator contracts to live devices. Asset hashes permit inspection/
+packaging/simulation only, never execution. New payload archives must be independently
+verified and never extracted/executed during host preparation.

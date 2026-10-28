@@ -26,3 +26,6 @@ markers = ["simulated: simulated protocol integration", "pi_host: opt-in Pi chec
 target-version = "py312"
 line-length = 100
 include = ["toonrooter/**/*.py", "tests/**/*.py"]
+
+[tool.setuptools.package-data]
+toonrooter = ["data/*.json"]

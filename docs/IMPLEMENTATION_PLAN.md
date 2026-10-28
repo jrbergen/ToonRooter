@@ -44,3 +44,22 @@ not yet run remotely; permission/failure matrix remains pending.
 M3-01 partial: doctor expanded, observe implemented, live JTAG explicitly refused.
 No physical target identification/reset/transfer simulation is claimed: those target
 executors do not exist yet. Preserve this gate rather than testing unrelated mocks.
+
+## Third-session acceptance update
+- [x] M2-02a Reviewed legacy command/effect/deadline specification and explicit
+  simulation boot states; fail-stop evidence validation and command construction.
+- [x] M2-02b Asset identity manifest and static exact-config allowlist. Acceptance:
+  host-only inspection rejects mutation/unsupported hardware; unknown provenance
+  cannot authorize execution. Original assets preserved.
+- [x] M2-03a Deterministic host packaging and independent canonical integrity verifier.
+- [x] M2-03b Simulation-only framed transfer, receiver length/hash verification and
+  failure tests using actual serial partial-write loop.
+- [ ] M2-02c Pinned complete nested OpenOCD chain, bootloader architecture/provenance,
+  real response contracts and authorized live executor. Parent M2-02 remains partial.
+- [ ] M2-03c Real Toon receiver capability negotiation, bounded staging on confirmed
+  mount, checksum/length acknowledgement, interruption cleanup and extraction review.
+  Parent M2-03 remains partial; simulation protocol is not deployed to the Toon.
+
+Next recommended task: M2-02c offline provenance/config-chain investigation and
+M2-03c receiver capability specification from representative firmware shell data.
+Do not wire simulated exchange contracts into live serial/OpenOCD paths.

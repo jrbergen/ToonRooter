@@ -51,3 +51,18 @@ payload is not idempotent (duplicate authorized_keys and credential regeneration
 No transaction or universal rollback. CPU halt/reset and init=/bin/sh boot interrupt
 normal thermostat services. No verified recovery or autonomous heating test exists.
 New implementation performs none of these state-changing actions.
+
+## Third session findings and mitigations
+| ID | Severity | Evidence/reference | Status and verification |
+|---|---|---|---|
+| S13 | High | u-boot.bin raw format, only version string; introduction a25023f | Hash/size inventory implemented; no architecture/provenance execution approval |
+| S14 | High | rooter.py:129-165 recursively archives payload then extracts directly | New host packager accepts pinned regular files only, explicit paths/modes; verifier checks canonical archive, duplicate/traversal/symlink and content; no extraction |
+| S15 | High | rooter.py:147-165 prompt substitutes for integrity/status | New simulation receiver verifies length/hash with explicit ack; real receiving tool absent, live transfer disabled |
+| S16 | High | ed20.cfg:20 external target/imx27.cfg version-dependent | Exact config hashes allow static inspection only, unresolved nested chain reported; unknown directives/hash rejected |
+| S17 | Medium | Boot transcript may contain credentials in addmisc/environment | State history holds sizes/status only; retained addmisc is never logged; live executor absent |
+
+Power-loss claims remain inferences: RAM image and unsaved environment normally
+disappear, but bundled binary behavior is not established. No complete backup,
+verified recovery, package rollback, or autonomous heating evidence exists.
+New simulated payload receiver stores only bounded host memory; it cannot demonstrate
+safe target storage, interrupted extraction cleanup or idempotent installation.

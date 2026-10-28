@@ -52,3 +52,29 @@ modern package/tests compileall passed, sdist/wheel build --no-isolation passed,
 git diff --check passed. OpenOCD tests run disposable Python child processes,
 not OpenOCD against hardware; pySerial test runs only a local PTY.
 No real Pi/Toon accessed, no commits or pushes.
+
+## Third session — 2026-10-28
+Inspected authoritative docs/source/assets/history/tests. Current branch master,
+baseline a7271f9 (user commits preserved), untracked .github/ and .idea/ retained.
+Baseline result here: 41 passed / 1 skipped (pySerial missing, PTY skipped).
+Implemented M2-02a/b and M2-03a/b; parents remain partial.
+Added asset manifest/validation, exact legacy config audit, fail-stop boot simulation
+with evidence parsing and constrained addmisc command construction, deterministic
+USTAR packaging/verification and in-memory framed receiver exercising actual serial
+writes with partial progress. No receiver or executor deployed on Toon.
+New CLI: asset-audit --repository PATH; package-payload --repository PATH
+--ssh-public-key PATH --output PATH (exclusive 0600 local creation).
+Files: toonrooter/assets.py, data/assets.json, boot/sequence.py, payload.py,
+transfer.py, safety.py, cli.py, pyproject.toml, tests/test_boot_payload.py;
+existing architecture/audit/roadmap/progress/AGENTS/README updated.
+Unresolved: binary format/architecture/provenance, nested target/imx27.cfg and
+modern Pi GPIO driver semantics, actual boot response contracts/authorization,
+receiver utility/mount/canonical-mode negotiation and interrupted staging cleanup.
+No physical Toon or Pi contacted, no commits/pushes. Other Python versions not tested.
+Next: M2-02c offline provenance and nested config-chain investigation; M2-03c real
+receiver specification. Never mistake simulated success for hardware validation.
+
+Final validation: Python 3.14.8, 91 passed / 1 skipped (existing real-pySerial PTY
+test skipped because dependency unavailable in this environment). Ruff passed,
+compileall passed, sdist/wheel builds passed, git diff --check passed. Asset JSON
+is included as package data. No claim of HIL, modern Pi OS or multi-Python validation.
