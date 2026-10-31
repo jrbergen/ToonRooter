@@ -95,3 +95,12 @@ not yet run. Host package validation is separate from hardware readiness.
 Next task: authorized M4-01b Pi-only deployment/doctor with Toon disconnected; independently
 finish M2-03c staged receiver/status simulation, validate actual utility fixture evidence.
 Do not unblock live execution by passing synthetic response tests.
+
+## Documentation readiness — 2026-10-31
+- [x] DOC-01 Root application reference, fresh Pi3 installation guide and phased
+  manual checklist created; actual CLI syntax, local host scenarios and official
+  OS/UART/driver sources checked. These do not close physical validation tasks.
+Current next action remains M4-01b/M4-02: fresh Lite64/Trixie host-only tests, Toon
+disconnected. CI workflow is now tracked in d2d2b4e (earlier notes predate that commit).
+No code change is required to begin this test; live rooting still needs M2-02c-4,
+M2-03c and the subsequent physical acceptance gates.

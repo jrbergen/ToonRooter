@@ -136,3 +136,24 @@ Added explicit regression: tar status zero does not detect changed valid archive
 Fixture no longer invents receiver-side host-hash comparisons. Source protocol reads
 version line then sends password immediately, without extra password-prompt wait.
 No actual UART/GPIO/target OpenOCD/SSH or payload execution; no staging/commit/push.
+
+## Documentation session — 2026-10-31
+Inspected master d2d2b4e, implementation, installer, assets/configs and tests.
+Initial worktree had only untracked .idea/; preserved. Created DOCS.md,
+RPI_INSTALL.md and TODO_MANUALLY.md with exact current CLI, a fresh Lite64/Trixie
+installation path (discarding Stretch), host-only testing/results checklist and
+remaining hardware/development gates. Official Pi OS/Imager/UART docs, Debian
+Python3.13/OpenOCD0.12 package pages and upstream wiring table checked.
+No application changes needed for host-only Pi3 testing; no physical validation done.
+Ran all seven subcommand helps, ten host CLI scenarios (local keys/audits/packages/
+simulation/probe/refusal/doctor), Ruff0.14.11, compileall and installer bash syntax.
+Full current suite on Python3.14.8:134 passed/1 skipped (pySerial absent, PTY test).
+Prior isolated 135-test Python3.13.12/3.14.8 results remain historical evidence;
+this session did not recreate those environments or test ARM64 hardware.
+Documented CLI examples parse and local Markdown links resolve; git diff --check passed.
+Only requested root guides and plan/progress updated. No commits/pushes or Pi/Toon access.
+Next: follow RPI_INSTALL.md then TODO_MANUALLY.md Phase C; share host results before wiring.
+
+User authorized committing this documentation work and encouraged descriptive local
+commits after future implementation/documentation steps. AGENTS.md updated accordingly;
+pushing still requires explicit instruction. Documentation diff check passed.

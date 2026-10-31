@@ -2,7 +2,8 @@
 Every session must read this file, docs/IMPLEMENTATION_PLAN.md and docs/PROGRESS.md,
 inspect relevant implementation, continue the next unfinished task, run applicable tests,
 and update both tracking documents before ending. Never mark complete before acceptance.
-Do not commit or push without instruction.
+Make sensible, descriptive local commits after completed implementation or documentation
+steps unless the user requests otherwise. Do not push without explicit instruction.
 Python >=3.12 only. Legacy rooter.py, sshkeys.py, assets and payload are evidence,
 not validated modern implementation. New CLI must never import legacy orchestration.
 No real hardware, remote Pi changes, payload execution, boot environment changes or HIL
