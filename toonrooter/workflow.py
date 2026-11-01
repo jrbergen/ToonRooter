@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from .assets import audit_configs, validate_inventory
 from .boot.compatibility import SUPPORTED_VERSIONS, analyze_bootloader
 from .boot.sequence import shell_boot_commands
-from .boot.uboot import UBootSession, version
+from .boot.uboot import PASSWORDS, UBootSession
 from .hardware.serial import SerialTransport, TransportError
 from .legacy_wire import prepare_legacy_wire
 from .payload import package
@@ -51,18 +51,6 @@ class RootSimulation:
                 return bytes(data)
         raise TransportError("Response limit exceeded")
 
-    def _banner(self, port, *, timeout=30):
-        # Legacy read_uboot_version waits for the version line, then sends the
-        # password immediately; do not invent an extra password-prompt wait.
-        deadline = port.clock() + timeout
-        data = bytearray()
-        while len(data) < 65536:
-            chunk = port.read(1, deadline)
-            data.extend(chunk)
-            if chunk == b"\n" and version(bytes(data)) is not None:
-                return bytes(data)
-        raise TransportError("Boot banner limit exceeded")
-
     def _status(self, port, label, timeout=30):
         data = self._prompt(port, timeout=timeout)
         found = re.findall(rb"(?:^|\n)TR:" + label + rb":([0-9]+)\r?\n", data)
@@ -84,8 +72,7 @@ class RootSimulation:
             self._phase("host-validated")
             with SerialTransport(rig.serial, transmit=True,
                                  clock=lambda: rig.serial.now) as port:
-                banner = self._banner(port, timeout=30)
-                observed = version(banner)
+                observed = UBootSession(port).read_version(timeout=30)
                 if observed not in SUPPORTED_VERSIONS:
                     self._phase("openocd-start")
                     ids = rig.start_openocd()
@@ -101,13 +88,11 @@ class RootSimulation:
                         raise TransportError("Bootloader load failed")
                     self._phase("bootloader-loaded")
                     rig.jtag(b"resume 0xa1f00000")
-                    banner = self._banner(port, timeout=30)
-                    observed = version(banner)
+                    observed = UBootSession(port).read_version(timeout=30)
                 if observed not in SUPPORTED_VERSIONS:
                     raise TransportError("Unexpected bootloader version")
                 # Historical credentials, never included in phase logs.
-                password = {"2010.09": b"toon", "2010.09-R6": b"f4E9J",
-                            "2010.09-R8": b"3BHf2"}[observed]
+                password = PASSWORDS[observed]
                 port.write(password)
                 uboot = UBootSession(port)
                 uboot.wait_prompt(timeout=10)

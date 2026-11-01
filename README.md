@@ -1,7 +1,10 @@
 # Python 3 modernization (in progress)
 
 The CLI supports host diagnostics and explicit receive-only UART observation.
-Hardware rooting and live JTAG remain disabled.
+The authorized `root --method auto|uart|jtag` command obtains temporary root.
+Permanent SSH installation remains unavailable. See [UART rooting](docs/UART_ROOTING.md)
+and [real R8 validation](docs/TOON1_R8_UART_VALIDATION.md); the new CLI itself has
+not yet been physically validated.
 Historical instructions below describe unvalidated legacy software; do not use them
 as modern deployment instructions.
 
@@ -259,8 +262,9 @@ toonrooter package-payload --repository . --ssh-public-key ./id_rsa.pub --output
 ```
 
 The archive is deterministic and independently verified; original scripts are unchanged.
-Known asset hashes establish identity, not trustworthy provenance. Live boot, JTAG and
-payload transfer remain disabled. The transfer receiver currently exists only in simulation.
+Known asset hashes establish identity, not trustworthy provenance. Boot operations now
+require explicit approvals through the root command; live payload transfer and
+installation remain disabled. The receiver currently exists only in simulation.
 
 asset-audit --openocd-scripts PATH compares installed target scripts to the reviewed
 OpenOCD 0.12.0 reference, without opening hardware. Matching source is not approval.

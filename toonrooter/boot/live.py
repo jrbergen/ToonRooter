@@ -1,4 +1,4 @@
-"""Opt-in library backend. No CLI entry point and no persistent installer.
+"""Explicitly authorized boot backend shared by UART and JTAG methods.
 
 Uses real OpenOCD commands, not the simulator's synthetic acknowledgements.
 Authorization is supplied by a future reviewed hardware session, never by diagnostics.
@@ -10,9 +10,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from toonrooter.assets import validate_inventory
-from toonrooter.boot.compatibility import SUPPORTED_VERSIONS, analyze_bootloader
-from toonrooter.boot.sequence import shell_boot_commands
-from toonrooter.boot.uboot import UBootSession, version
+from toonrooter.boot.compatibility import analyze_bootloader
+from toonrooter.boot.profiles import R8_ENVIRONMENT
+from toonrooter.boot.uboot import UBootSession, prompt
 from toonrooter.deployment import openocd_profile
 from toonrooter.hardware.config_review import review_chain
 from toonrooter.hardware.openocd import OpenOCD, OpenOCDError, Query, parse_adapters
@@ -25,6 +25,7 @@ class BootAuthorization:
     reset_registers_ram: bool = False
     execute_reviewed_image: bool = False
     boot_linux_shell: bool = False
+    change_boot_arguments: bool = False
 
 
 # No caller-controlled Tcl, addresses, adapter configuration or target IDs.
@@ -109,65 +110,141 @@ class BootConsole:
         self.transport = transport
         self.session = UBootSession(transport)
 
-    def login(self, authorization: BootAuthorization, *, timeout=15.0):
+    def login(self, authorization: BootAuthorization, *, timeout=90.0, observed_version=None):
         if not authorization.uart_commands:
             raise PermissionError("Interactive UART approval required")
-        deadline = self.transport.clock() + finite_timeout(timeout)
-        line = bytearray()
-        for _ in range(65536):
-            chunk = self.transport.read(1, deadline)
-            line.extend(chunk)
-            if chunk == b"\n":
-                found = version(bytes(line))
-                if found:
-                    if found not in SUPPORTED_VERSIONS:
-                        raise TransportError("Unsupported U-Boot version")
-                    # Historical password window: transmit immediately after banner.
-                    password = {"2010.09": b"toon", "2010.09-R6": b"f4E9J",
-                                "2010.09-R8": b"3BHf2"}[found]
-                    self.transport.write(password, timeout=max(.001, deadline-self.transport.clock()))
-                    self.session.wait_prompt(timeout=max(.001, deadline-self.transport.clock()))
-                    return found
-                line.clear()
-        raise CaptureLimit("U-Boot banner limit exceeded")
+        found = observed_version or self.session.read_version(timeout=timeout)
+        self.session.authenticate(found, timeout=timeout)
+        self.uboot_version = found
+        return found
 
-    def linux_shell(self, authorization: BootAuthorization, *, reviewed_environment: bytes,
+    def linux_shell(self, authorization: BootAuthorization, *, reviewed_environment: bytes | None = None,
                     timeout=90.0):
-        """Require exact, previously reviewed environment, including all boot macros.
+        """Require the verified R8 profile or a previously reviewed full environment.
 
         run boot_nand invokes target-defined macros; a prompt/version alone cannot
         authorize their effects. No generic command API is exposed.
         """
-        if not (authorization.uart_commands and authorization.boot_linux_shell):
-            raise PermissionError("UART and Linux shell boot approval required")
+        if not (authorization.uart_commands and authorization.change_boot_arguments
+                and authorization.boot_linux_shell):
+            raise PermissionError("UART, boot-argument and Linux shell boot approvals required")
         finite_timeout(timeout)
         environment = self.session.environment(timeout=10)
-        if environment != reviewed_environment:
+        actual = environment_values(environment)
+        if reviewed_environment is None:
+            if (getattr(self, "uboot_version", None) != "2010.09-R8"
+                    or any(actual.get(k) != v for k, v in R8_ENVIRONMENT.items())):
+                raise TransportError("Environment does not match verified R8 profile; "
+                                     "supply a separately reviewed environment snapshot")
+        elif actual != environment_values(reviewed_environment):
             raise TransportError("Environment differs from separately reviewed boot macros")
-        values = re.findall(rb"^addmisc=([^\r\n]+)\r?$", environment, re.MULTILINE)
-        if len(values) != 1 or not re.search(rb"^boot_nand=.+", environment, re.MULTILINE):
-            raise TransportError("Missing or ambiguous boot environment")
-        command, boot, _ = shell_boot_commands(values[0]).split(b"\n")
+        validate_boot_environment(actual)
+        original = actual.get(b"addmisc", b"")
+        if not actual.get(b"boot_nand") or not original.startswith(b"setenv bootargs "):
+            raise TransportError("Missing or nonmatching boot environment")
+        if b"init=" in original:
+            raise TransportError("Environment already overrides init; review required")
+        # Only preserve literal macro text; backslash each U-Boot metacharacter.
+        # R8 hardware confirmed escaped dollar AND braces. Never expand ${...} now.
+        if not re.fullmatch(rb"[A-Za-z0-9_ /.,:=+{}$;-]+", original):
+            raise TransportError("Unsupported addmisc syntax")
+        value = original + b" init=/bin/sh"
+        command = b"setenv addmisc " + re.sub(rb"([$;{}])", rb"\\\1", value)
+        boot = b"run boot_nand"
         self.transport.write(command + b"\n")
         response = self.session.wait_prompt(timeout=10)
         if response.replace(b"\r", b"").rstrip(b" ") != command + b"\nU-Boot>":
             raise TransportError("Unexpected setenv response")
-        # Read back the environment before executing any boot macro.
-        changed = self.session.environment(timeout=10)
-        expected = environment.replace(b"addmisc=" + values[0],
-                                       b"addmisc=" + values[0] + b" init=/bin/sh", 1)
+        changed = environment_values(self.session.environment(timeout=10))
+        expected = {**actual, b"addmisc": value}
         if changed != expected:
             raise TransportError("Volatile environment update not verified")
         self.transport.write(boot + b"\n")
         self.session.ready = False
-        deadline = self.transport.clock() + timeout
+        self._shell_prompt(timeout=timeout)
+
+    def _shell_prompt(self, *, timeout):
+        deadline = self.transport.clock() + finite_timeout(timeout)
         data = bytearray()
         while len(data) < 65536:
             chunk = self.transport.read(1, deadline)
             data.extend(chunk)
-            if not chunk and re.search(rb"(?:^|\n)/ # $", data):
-                return  # Console evidence only; not installed/rooted/SSH verified.
+            if not chunk and re.search(rb"(?:^|\n)/ # ?$", data):
+                return bytes(data)
         raise CaptureLimit("Linux console response limit exceeded")
+
+    def verify_root(self, *, timeout=10):
+        self.transport.write(b"id; printf '\\nTR:ID:%s\\n' \"$?\"\n")
+        data = self._shell_prompt(timeout=timeout)
+        if (re.findall(rb"^TR:ID:([0-9]+)\r?$", data, re.MULTILINE) != [b"0"]
+                or not re.search(rb"^uid=0\(root\)(?: |\r?$)", data, re.MULTILINE)):
+            raise TransportError("Root identity not verified; no permanent installation performed")
+
+    def ensure_proc(self, *, timeout=10):
+        self.transport.write(
+            b"if [ ! -r /proc/self/stat ]; then mount -t proc proc /proc; fi; "
+            b"test -r /proc/self/stat; printf '\\nTR:PROC:%s\\n' \"$?\"\n")
+        data = self._shell_prompt(timeout=timeout)
+        if re.findall(rb"^TR:PROC:([0-9]+)\r?$", data, re.MULTILINE) != [b"0"]:
+            raise TransportError("proc filesystem unavailable; temporary shell requires inspection")
+
+
+def environment_values(data):
+    """Canonical key/value comparison; tolerate CRLF, order and prompt spacing.
+
+    A file can contain plain name=value lines or a complete printenv response.
+    Reject duplicate variables and unexpected lines without exposing their contents.
+    """
+    result = {}
+    for line in data.replace(b"\r", b"").split(b"\n"):
+        if not line or line.strip() == b"printenv" or prompt(line):
+            continue
+        if re.fullmatch(rb"Environment size: [0-9]+/[0-9]+ bytes", line):
+            continue
+        match = re.fullmatch(rb"([A-Za-z_][A-Za-z0-9_]*)=(.*)", line)
+        if not match or match[1] in result:
+            raise TransportError("Malformed or duplicate boot environment variable")
+        result[match[1]] = match[2]
+    return result
+
+
+def validate_boot_environment(values):
+    """Review boundary for the temporary boot path: no persistent commands.
+
+    The reviewed snapshot binds actual values. Recursively inspect all run macros;
+    unknown commands, dynamic run targets and loops require their own implementation.
+    """
+    seen = set()
+    active = set()
+    def visit(name):
+        if len(active) >= 32 or name in active or name not in values:
+            raise TransportError("Missing or recursive boot macro")
+        if name in seen:
+            return
+        active.add(name)
+        if not re.fullmatch(rb"[A-Za-z0-9_ /.,:=+{}$;@()-]+", values[name]):
+            raise TransportError("Unsupported boot macro syntax")
+        for command in values[name].split(b";"):
+            words = command.split()
+            if not words:
+                continue
+            if words[0] == b"run" and len(words) > 1:
+                for child in words[1:]:
+                    if not re.fullmatch(rb"[A-Za-z_][A-Za-z0-9_]*", child):
+                        raise TransportError("Dynamic boot macro requires review")
+                    visit(child)
+            elif ((words[:2] == [b"setenv", b"bootargs"] and len(words) > 2)
+                  or (len(words) >= 4 and words[0] == b"nand"
+                      and words[1] in {b"read", b"read.jffs2", b"read.e"})
+                  or (words[0] == b"bootm" and len(words) > 1)):
+                pass
+            else:
+                raise TransportError("Unsupported boot macro command; no boot changes performed")
+        active.remove(name)
+        seen.add(name)
+    visit(b"boot_nand")
+    if b"addmisc" not in seen:
+        raise TransportError("boot_nand does not invoke addmisc")
 
 
 def boot_to_console(repository, serial_path, authorization, *, model, jtag=False,

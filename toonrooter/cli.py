@@ -1,4 +1,4 @@
-"""Host-only CLI; never imports the legacy Rooter."""
+"""Host preparation and explicitly authorized boot operations; no legacy imports."""
 import argparse
 import getpass
 import importlib.util
@@ -14,7 +14,7 @@ from .hardware.serial import TransportError, finite_timeout
 
 
 def parser() -> argparse.ArgumentParser:
-    result = argparse.ArgumentParser(description="Toon 1 preparation tools (hardware disabled)")
+    result = argparse.ArgumentParser(description="Toon 1 preparation and authorized temporary-root tools")
     commands = result.add_subparsers(dest="command", required=True)
     doctor = commands.add_parser("doctor", help="Inspect host only; never opens serial or GPIO")
     doctor.add_argument("--serial-port", type=Path, default=Path("/dev/serial0"))
@@ -27,6 +27,20 @@ def parser() -> argparse.ArgumentParser:
     simulation.add_argument("--ssh-public-key", type=Path, required=True)
     simulation.add_argument("--authorize-simulated-install", action="store_true")
     simulation.add_argument("--authorize-simulated-reboot", action="store_true")
+    root = commands.add_parser("root", help="Authorized temporary root shell; no persistent install")
+    root.add_argument("--method", choices=["auto", "uart", "jtag"], default="auto")
+    root.add_argument("--serial", required=True)
+    root.add_argument("--reviewed-environment", type=Path,
+                      help="Private reviewed printenv snapshot, including boot_nand and its macros")
+    root.add_argument("--repository", type=Path, help="Required for the Pi3 JTAG backend")
+    root.add_argument("--timeout", type=float, default=90.0)
+    root.add_argument("--authorize-uart", action="store_true")
+    root.add_argument("--authorize-boot-arguments", action="store_true")
+    root.add_argument("--authorize-shell-boot", action="store_true")
+    root.add_argument("--authorize-jtag-reset", action="store_true")
+    root.add_argument("--authorize-image-execution", action="store_true")
+    root.add_argument("--install", action="store_true", help="Reserved: live install is unavailable")
+    root.add_argument("--authorize-install", action="store_true")
     keys = commands.add_parser("keys", help="Prepare local RSA keys; never contacts the Toon")
     keys.add_argument("--private-key", type=Path, default=Path("id_rsa"))
     keys.add_argument("--ssh-public-key", type=Path)
@@ -51,6 +65,34 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
+        if args.command == "root":
+            from .boot.live import BootAuthorization
+            from .boot.native import temporary_root
+            from .security.ssh_keys import read_regular
+            if args.install or args.authorize_install:
+                raise TransportError("Persistent installation is unavailable; no hardware opened")
+            authorization = BootAuthorization(
+                uart_commands=args.authorize_uart,
+                reset_registers_ram=args.authorize_jtag_reset,
+                execute_reviewed_image=args.authorize_image_execution,
+                boot_linux_shell=args.authorize_shell_boot,
+                change_boot_arguments=args.authorize_boot_arguments)
+            if not (authorization.uart_commands and authorization.change_boot_arguments
+                    and authorization.boot_linux_shell):
+                raise TransportError("Require --authorize-uart, --authorize-boot-arguments "
+                                     "and --authorize-shell-boot; no hardware opened")
+            reviewed = (read_regular(args.reviewed_environment)
+                        if args.reviewed_environment is not None else None)
+            model_path = Path("/proc/device-tree/model")
+            model = model_path.read_text().rstrip("\x00\n") if model_path.is_file() else ""
+            result = temporary_root(
+                args.serial, authorization, method=args.method, reviewed_environment=reviewed,
+                repository=args.repository, model=model, timeout=args.timeout,
+                on_open=lambda: print("UART open at 115200 8N1; ready for Toon power-on. "
+                                      "No automatic power/reset action. Temporary root only.",
+                                      file=sys.stderr, flush=True))
+            print(json.dumps(result, indent=2))
+            return 0
         if args.command == "simulate-root":
             from dataclasses import asdict
 
@@ -133,13 +175,17 @@ def main(argv: list[str] | None = None) -> int:
         prepare_key(args.private_key, args.ssh_public_key, password)
         print("RSA public key validated; local key preparation complete.")
         return 0
-    except (TransportError, OpenOCDError) as exc:
+    except (TransportError, OpenOCDError, PermissionError) as exc:
         print(str(exc), file=sys.stderr)
         return 2
     except KeyboardInterrupt:
         print("Interrupted; resources closed.", file=sys.stderr)
         return 130
     except (OSError, ValueError, TypeError):
+        if args.command == "root":
+            print("Temporary-root operation failed: check device/environment paths, permissions "
+                  "and timeout. No permanent installation performed.", file=sys.stderr)
+            return 2
         print("Preparation failed: check paths, permissions, RSA format, passphrase and key "
               "consistency. Existing keys were not overwritten.", file=sys.stderr)
         return 2

@@ -1,9 +1,18 @@
-"""Byte parsing and narrowly allowlisted U-Boot observation, never bootstrapping."""
+"""Shared bounded U-Boot banner, authentication, prompt and environment protocol."""
 import re
 from dataclasses import dataclass
 from enum import Enum
 
-from toonrooter.hardware.serial import CaptureLimit, TransportError, finite_timeout
+from toonrooter.hardware.serial import (
+    CaptureLimit,
+    DeadlineExceeded,
+    TransportError,
+    finite_timeout,
+)
+
+# Kept private to protocol execution: never include values in diagnostics/results.
+# R8 is user-verified on ED2.4/6.4.5-0; R6/base are historical only.
+PASSWORDS = {"2010.09": b"toon", "2010.09-R6": b"f4E9J", "2010.09-R8": b"3BHf2"}
 
 
 class Effect(Enum):
@@ -51,6 +60,42 @@ class UBootSession:
     def _event(self, direction, size):
         if len(self.transcript) < 1024:
             self.transcript.append(Event(self.transport.clock(), direction, size))
+
+    def read_version(self, *, timeout=90.0) -> str:
+        deadline = self.transport.clock() + finite_timeout(timeout)
+        data = bytearray()
+        while len(data) < self.limit:
+            chunk = self.transport.read(1, deadline)
+            data.extend(chunk)
+            if chunk == b"\n":
+                found = version(bytes(data))
+                if found:
+                    return found
+        raise CaptureLimit("U-Boot banner limit exceeded")
+
+    def authenticate(self, observed_version, *, timeout=15.0):
+        if not PASSWORDS.get(observed_version):
+            raise TransportError("No known password for observed U-Boot version")
+        deadline = self.transport.clock() + finite_timeout(timeout)
+        data = bytearray()
+        # The real R8 password window appears after the version banner. Do not
+        # transmit into earlier boot output, and do not wait for a trailing newline.
+        while len(data) < self.limit:
+            try:
+                chunk = self.transport.read(1, deadline)
+            except DeadlineExceeded as exc:
+                raise DeadlineExceeded("U-Boot password challenge timed out; no password sent") from exc
+            data.extend(chunk)
+            if data.endswith(b"Enter password - autoboot in 2 sec"):
+                remaining = deadline - self.transport.clock()
+                self.transport.write(PASSWORDS[observed_version] + b"\r", timeout=remaining)
+                try:
+                    self.wait_prompt(timeout=deadline - self.transport.clock())
+                except DeadlineExceeded as exc:
+                    raise DeadlineExceeded("U-Boot authentication failed or prompt timed out; "
+                                           "no boot arguments changed") from exc
+                return
+        raise CaptureLimit("U-Boot password challenge limit exceeded")
 
     def wait_prompt(self, *, timeout=5.0) -> bytes:
         deadline = self.transport.clock() + finite_timeout(timeout)

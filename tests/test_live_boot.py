@@ -16,7 +16,7 @@ from toonrooter.hardware.serial import DeadlineExceeded, SerialTransport, Transp
 
 ROOT = Path(__file__).resolve().parents[1]
 PI = "Raspberry Pi 3 Model B Rev 1.2"
-AUTH = BootAuthorization(True, True, True, True)
+AUTH = BootAuthorization(True, True, True, True, True)
 VERSION = "Open On-Chip Debugger 0.12.0+dev-snapshot (2026-02-16-16:07)"
 ADAPTERS = "banner\nTOON_ADAPTERS_BEGIN\nbcm2835gpio sysfsgpio linuxgpiod\nTOON_ADAPTERS_END\nshutdown command invoked"
 ENV = (b"printenv\r\naddmisc=setenv bootargs ${bootargs} mem=${mem}\r\n"
@@ -109,7 +109,7 @@ def test_gate_and_image_rejection(tmp_path):
 
 class ConsoleDevice:
     def __init__(self, banner=b"U-Boot 2010.09 (Feb 15 2017)\r\n", failure=None):
-        self.rx = deque(banner)
+        self.rx = deque(banner + b"Enter password - autoboot in 2 sec")
         self.sent = bytearray()
         self.pending = bytearray()
         self.now = 0
@@ -128,7 +128,7 @@ class ConsoleDevice:
         part = data[:2]
         self.sent.extend(part)
         self.pending.extend(part)
-        if self.pending == b"toon":
+        if self.pending == b"toon\r":
             self.rx.extend(b"U-Boot>")
             self.pending.clear()
         elif self.pending.endswith(b"\n"):
@@ -184,7 +184,7 @@ def test_uart_disconnect_and_environment_mismatch():
     session = console(device)
     session.login(AUTH)
     with pytest.raises(TransportError, match="reviewed"):
-        session.linux_shell(AUTH, reviewed_environment=b"unreviewed")
+        session.linux_shell(AUTH, reviewed_environment=ENV.replace(b"0x200000", b"0x100000"))
     assert b"setenv" not in device.sent
 
 

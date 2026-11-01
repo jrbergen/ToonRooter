@@ -1,7 +1,11 @@
 # Manual tests and remaining work
 
-**Immediate objective: prepare receive-only UART validation; Pi host tests completed.**
-The current app is ready for that. It is not yet a live rooting utility.
+**Current status: Pi host validation and manual ED2.4/R8 UART temporary root succeeded.**
+The [R8 evidence](docs/TOON1_R8_UART_VALIDATION.md) and
+[native CLI guide](docs/UART_ROOTING.md) supersede the earlier unvalidated-UART and
+no-live-CLI statements below. Do not repeat the completed manual/host baseline.
+The new root CLI itself needs a separately authorized physical check. No physical
+access is authorized in the development session. Persistent installation remains unfinished.
 Commands below assume the Pi checkout at `~/ToonRooter` unless stated otherwise.
 
 ## Phase A — Current project readiness
@@ -28,7 +32,7 @@ Commands below assume the Pi checkout at `~/ToonRooter` unless stated otherwise.
    `python3 --version`, `ip -4 address show wlan0`: expect Trixie, aarch64/arm64,
    Python3.13.x and the intended DHCP network. A mismatch blocks the recommended setup.
 4. Install system packages/project using the guide. `.venv/bin/toonrooter --help`
-   must list seven subcommands. `.venv/bin/python -m pip check` must report no broken
+   must list eight subcommands (including the new root command). `.venv/bin/python -m pip check` must report no broken
    requirements. A failure blocks application testing, not a reason to connect Toon.
 5. Configure UART/disable Bluetooth and serial login as described there. After reboot,
    `readlink -f /dev/serial0` must resolve; `cat /proc/cmdline` must not designate
@@ -315,3 +319,21 @@ NOT be used as an identification-only probe. Check both TAP IDs before RAM loadi
 Then approve the exact historical image's startup risks, run volatile boot validation,
 and capture UART. No persistent installation before backups and receiver/tool/mount
 inspection. The library has no live install, reboot or SSH verification operation.
+
+
+## UART-first next steps (supersedes earlier next actions)
+
+1. Preserve the captured original environment and firmware/PCB evidence privately.
+   Manual R8 temporary root, writable UBIFS (~40.1 MiB free) and proc mount are
+   completed evidence, not simulated results; no JTAG or persistent install occurred.
+2. After installing the new revision, separately authorize validation of the native
+   `root --method auto` command using UART_ROOTING.md. Confirm version/challenge,
+   exact recorded profile, readback, root UID and proc result. This is new-code
+   acceptance, not a request to repeat host installation or manual UART discovery.
+3. Next development: inspect actual receiver utilities/mounts/terminal behavior,
+   prepare feasible backups, fix known installer errors and add postcondition/partial
+   failure checks before any persistent install. Do not auto-reboot on failure.
+4. Preserve JTAG for devices without password access. No JTAG validation is required
+   to use this verified native route; disruptive fallback remains separately approved.
+5. R6 requires a reviewed actual environment and its own physical validation. No
+   R8 macro values are assumed for R6. SSH/heating/activation remain separate tasks.

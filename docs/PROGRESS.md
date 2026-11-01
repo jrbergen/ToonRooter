@@ -212,3 +212,54 @@ UART timeout/disconnect, environment mismatch/readback failure and withheld appr
 No Pi/Toon access, physical signaling, target code/payload execution or push performed.
 Next: reviewed electrical inspection and receive-only UART capture; M2/M3/M5 parents
 remain open pending actual acceptance, identification-only profile and installation work.
+
+## Native UART-first temporary root — 2026-11-01
+
+Baseline e3f209e on py3-modernize; pre-existing untracked .idea/ and uv.lock retained.
+Read AGENTS/plan/progress and inspected UART/JTAG/CLI/protocol/workflow/tests. Recorded
+user-reported **physical ED2.4/R8 temporary root**, a major advance beyond simulation:
+Toon PN6500-1400-2001, PCB PN6500-1400-2200, i.MX27 ARM926EJ-S, 128MiB RAM/NAND,
+qb2/uni/6.4.5-0, kernel2.6.36-R10-h28. UART wiring/3.3V/115200 8N1 and R8 password
+access confirmed. Original boot chain supplied verbatim, escaped volatile addmisc
+change/readback booted original kernel with init=/bin/sh, uid=0(root), writable UBIFS
+(~40.1MiB free) and proc mount. No saveenv, JTAG, explicit NAND write/erase, payload
+or permanent SSH install occurred. See TOON1_R8_UART_VALIDATION.md for exact evidence.
+This user-run manual result is not physical acceptance of the newly implemented CLI.
+
+Implemented root --method auto|uart|jtag. UBootSession now owns bounded banner reading
+and challenge-aware password+CR authentication; simulation reuses its banner parser.
+BootConsole is shared by native and JTAG routes. R8 profile matches the exact supplied
+boot chain/parameters; unrelated variables are retained. Other environments need a
+reviewed full snapshot, not guessed R8 values. R6/base credentials remain historical,
+untested on our hardware; R6 tests explicitly use a differing synthetic configuration.
+Actual environment is parsed/validated, addmisc retains original arguments and lpj,
+escapes dollar/braces, readback verifies all variables before boot_nand. Linux prompt
+alone is insufficient: checked id exit status and uid=0(root), then conditional proc
+mount/check. Result reports temporary root, permanent_root/install/SSH false.
+
+Auto prefers a known available password and only offers supported JTAG for unknown
+versions. It never invokes fallback, including after auth/boot failure. Retained fixed
+Pi3JtagBoot script and existing library entry points; explicit JTAG root requires reset/
+RAM and image approvals plus reviewed RAM-image environment before opening UART.
+Separate UART, boot-argument and modified-boot approvals are mandatory. Persistent
+--install/--authorize-install are refused before opening hardware. No saveenv/installer
+API added; future installation can reuse the bounded console, not simulator contracts.
+All physical operations remain separately authorized; none executed in this session.
+
+Updated README/application/manual guides, AGENTS, architecture/audit and plan; created
+UART_ROOTING.md. Earlier no-live-CLI/unvalidated-UART next actions are superseded.
+Normal heating is bypassed in temporary shell; closing UART does not restore services
+or reboot. Writable rootfs is not zero-persistence proof. JTAG electrical/reset/image
+startup remains unvalidated; no identification-only probe, live receiver/staging,
+installer/postconditions, backup/recovery, reboot or real SSH/heating verification yet.
+
+Final local verification: Python3.13.5 x86_64, **203 passed in 7.73s, zero skips**;
+Ruff/compileall/diff checks passed. Dependency check: all 13 installed packages compatible.
+Source distribution and wheel built; final wheel installed under /tmp and checked
+outside checkout for profile, native method selection and pre-device authorization/
+missing-JTAG-snapshot refusals. Tests exercise exact R8 wire command, R6 review,
+unknown versions/unavailable passwords, challenge/auth/readback/boot/shell/UID/proc/
+disconnect failures, macro mismatch/persistent commands, cleanup and JTAG selection.
+No Pi/Toon access, hardware test, payload execution, remote changes or push.
+Next: separately authorized native CLI physical acceptance; develop receiver/tool/mount
+inspection, backups and installer failure/postcondition handling before persistent install.

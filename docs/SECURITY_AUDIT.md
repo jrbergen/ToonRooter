@@ -123,3 +123,20 @@ modes, RAM staging/free-space and completion evidence are unknown. Retain gzip/b
 compatibility; tar exit zero is neither content verification nor install success.
 Never automatically reboot a partially failed install. Postconditions must check files,
 key permissions, package/service state, then real SSH and autonomous heating separately.
+
+## Native temporary root update — 2026-11-01
+
+Real R8 UART/password/temporary-root findings supersede earlier UART uncertainty for
+this ED2.4 only; JTAG remains unvalidated. root is now a hardware-capable CLI command
+with explicit UART, volatile argument and modified-boot approvals. JTAG additionally
+requires reset/RAM and image execution approvals; auto never invokes it. Host-only
+probe/doctor and receive-only observe retain their existing boundaries.
+
+The verified profile boots writable UBIFS and init=/bin/sh, bypassing ordinary heating
+services. Unsaved environment is temporary; this is not a claim of zero kernel/storage
+side effects. No saveenv or persistent installer is sent. Exact readback blocks boot
+after failed setenv, but cannot undo its possible volatile change. Abort closes UART
+and does not restore heating. Root UID/proc evidence never certifies permanent SSH.
+Snapshot matching never bypasses supported boot-command checks. Credentials and full
+environment responses are not printed in CLI results. Known installer/backup/SSH and
+heating-verification blockers above remain open.

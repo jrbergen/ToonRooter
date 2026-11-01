@@ -135,3 +135,28 @@ Local verification for this milestone: Python3.13.5 x86_64, 167 pytest cases pas
 without skips, Ruff/compileall/dependency check pass, source/wheel builds and installed
 wheel resource/profile/gate smoke check pass. Tcl stubs check fail-stop control flow;
 no physical OpenOCD/UART execution. See current PROGRESS entry for limits.
+
+## Native UART and actual Toon milestone — 2026-11-01 (current)
+
+Supersedes the previous receive-only-first/no-live-CLI next actions.
+- [x] UART-01 User-reported physical ED2.4/2010.09-R8 temporary root at firmware
+  qb2/uni/6.4.5-0: confirmed 3.3V UART wiring, password/challenge/CR, captured macros,
+  unsaved addmisc change, original kernel boot, uid=0(root), writable UBIFS and proc.
+  See TOON1_R8_UART_VALIDATION.md. No JTAG, saveenv or permanent SSH installation.
+- [x] UART-02 Native CLI root --method auto|uart|jtag; shared version/auth protocol,
+  exact R8 profile, real environment/readback, explicit argument/boot authorizations,
+  root UID/proc checks, separate JTAG approvals, failure/no-fallback tests.
+  Code acceptance is local simulated execution; manual hardware evidence is separate.
+- [ ] UART-03 Separately authorized physical acceptance of the new CLI on this Toon.
+- [ ] M2-03c/M3/M5: receiver/staging, installer fixes/postconditions, backups/recovery,
+  persistent SSH installation, reboot/SSH/heating verification remain incomplete.
+M5-01 is partial: native UART physical milestone achieved; JTAG reset/RAM bootstrap
+remains physically unvalidated and is not required for this native route. R6 support
+is historically documented and simulated only, requiring an actual reviewed snapshot.
+Next development: actual receiver/tool/mount evidence and installer failure handling;
+next physical acceptance: the new native CLI, separately authorized. No OS reinstall,
+host baseline repetition or JTAG operation is needed for the verified R8 route.
+
+UART milestone local checks: Python3.13.5, 203 tests pass without skips; Ruff,
+compileall, dependency check, source/wheel builds and installed-wheel profile/selection/
+authorization smoke checks pass. New CLI hardware acceptance remains open.

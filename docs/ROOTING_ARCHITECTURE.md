@@ -378,3 +378,27 @@ Host-only adapter discovery explicitly echoes and delimits Tcl's return value.
 The exact Pi snapshot timestamp is host-validated, not every development snapshot;
 other unreviewed builds are UNKNOWN. Script-chain verification is a separate check.
 No combination of doctor checks certifies GPIO electrical operation or Toon compatibility.
+
+## Native UART route — current 2026-11-01
+
+Manual ED2.4/R8 temporary root is now user-verified on hardware; the new CLI remains
+simulated-test evidence. boot/native.py orchestrates one shared BootConsole/UBootSession
+for UART or explicit Pi3JtagBoot. UBootSession owns version detection and authentication:
+wait for the actual challenge, then password+CR. RootSimulation reuses version parsing
+but retains its explicitly historical synthetic handshake. No fixture endpoint is
+connected to a physical transport.
+
+R8 uses exact user-captured profile fields (boot/profiles.py), preserving unrelated
+actual variables. Other environments require an exact reviewed full snapshot; R6
+inherits no R8 firmware assumptions. All reachable run macros are checked against
+supported temporary boot commands; unknown/dynamic/persistent commands fail. Only
+addmisc changes, with dollar/braces/semicolon escaped; complete readback precedes
+boot_nand. A Linux prompt alone is insufficient: uid=0(root) and id status are checked,
+then proc is conditionally mounted and checked. TemporaryRootResult deliberately
+reports permanent_root/installation_performed/ssh_verified false. The reusable console
+is the future live-install integration point; the synthetic transfer is not a receiver.
+
+Auto selects known passwords first; unknown/unavailable passwords only offer supported
+JTAG as a separately approved explicit invocation. Authentication failure/timeouts never
+trigger a fallback. The fixed JTAG script is unchanged. Distinct boot-argument/boot and
+JTAG reset/image approvals precede operations. No CLI option enables persistent install.

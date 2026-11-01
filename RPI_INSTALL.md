@@ -162,5 +162,6 @@ No installation command here opens a target debug session or roots the Toon.
 Current status (2026-11-01): Pi installation/host tests completed at `718ae8f`.
 Do not reinstall this validated host. See [validation](docs/PI3_HOST_VALIDATION.md)
 and the current next-action section in [TODO_MANUALLY](TODO_MANUALLY.md).
-A gated library boot backend now exists; live CLI and installation remain disabled.
+The authorized native temporary-root CLI now exists; persistent installation remains
+disabled. See [UART_ROOTING](docs/UART_ROOTING.md).
 Only the changed doctor diagnostics need Pi retesting after this revision is installed.

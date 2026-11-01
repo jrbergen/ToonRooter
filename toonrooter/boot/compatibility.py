@@ -4,8 +4,9 @@ import struct
 from dataclasses import dataclass
 
 from toonrooter.assets import validate_inventory
+from toonrooter.boot.uboot import PASSWORDS
 
-SUPPORTED_VERSIONS = frozenset({"2010.09", "2010.09-R6", "2010.09-R8"})
+SUPPORTED_VERSIONS = frozenset(PASSWORDS)
 
 
 def analyze_bootloader(root) -> dict:

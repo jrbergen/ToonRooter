@@ -1,13 +1,16 @@
 # ToonRooter application reference
 
-Status checked against commit `d2d2b4e` on 2026-10-31. Start with
+Current UART-first CLI: see [UART_ROOTING](docs/UART_ROOTING.md) and the
+[real R8 temporary-root result](docs/TOON1_R8_UART_VALIDATION.md). Installation guide:
 [RPI_INSTALL.md](RPI_INSTALL.md), then follow [TODO_MANUALLY.md](TODO_MANUALLY.md).
 
 ## Purpose and components
 
 Rooting gives the Toon administrator access, including an SSH login for local
 maintenance. It does **not** activate an unactivated thermostat. The current Python 3
-application prepares and rehearses the procedure; it cannot yet root a real Toon.
+application supports authorized temporary root through native UART or the retained
+JTAG backend. Persistent SSH installation remains unavailable. The manual R8 procedure
+is physically verified; the new CLI has local simulated tests only.
 
 - **UART** is a serial text connection to the Toon's console, at 115200 baud, 8N1
   (eight data bits, no parity, one stop bit).
@@ -32,8 +35,8 @@ flowchart LR
     P --> V[Reboot, SSH and heating verification]
 ```
 
-This is the intended target path. Beyond host preparation, it is currently a
-simulation; only explicit receive-only UART observation can contact hardware.
+The live `root` command stops after verified temporary root and proc availability.
+Payload transfer, persistent installation and final SSH/heating checks remain future work.
 
 ## Intended sequence and effects
 
@@ -41,9 +44,9 @@ simulation; only explicit receive-only UART observation can contact hardware.
 |---|---|---|
 | Inspect Pi, keys, files and configuration | None | Host-only commands work |
 | Confirm wiring/voltage, observe existing UART output | Observation; opening adapters may glitch control lines | `observe` implemented; physical setup untested |
-| Use supported existing U-Boot console where possible | Sends console input | Protocol tested in simulation; no live workflow |
-| Otherwise identify/init JTAG, halt/reset and load U-Boot at `0xa1f00000` | Changes CPU/registers/RAM and boot state | Reference chain reviewed; live JTAG disabled |
-| Inspect environment, append `init=/bin/sh` to `addmisc`, run `boot_nand` | Temporary boot change; normal services bypassed | Constructed/tested in simulation; no `saveenv` |
+| Use supported existing U-Boot console where possible | Sends console input | Shared bounded protocol and authorized native UART workflow |
+| Otherwise identify/init JTAG, halt/reset and load U-Boot at `0xa1f00000` | Changes CPU/registers/RAM and boot state | Retained fixed backend, separate approvals; hardware unvalidated |
+| Inspect environment, append `init=/bin/sh` to `addmisc`, run `boot_nand` | Temporary boot change; normal services bypassed | Live temporary-boot path, readback verified; no `saveenv` |
 | Transfer and install payload | Filesystem/package/configuration writes | Preparation works; transfer/execution simulation only |
 | Reboot and check SSH, touchscreen and heating | Returns to normal operation if successful | Synthetic verification only |
 
@@ -61,6 +64,7 @@ also does not prove that executing it cannot write persistent storage.
 | `hardware/serial.py` | Bounded bytes-only I/O, partial writes, receive-only enforcement, cleanup |
 | `hardware/openocd.py`, `hardware/config_review.py` | Fixed host queries/process cleanup; pinned source comparison |
 | `boot/uboot.py`, `boot/compatibility.py` | Version/prompt parsing, environment inspection, binary analysis and route planning |
+| `boot/live.py`, `boot/native.py`, `boot/profiles.py` | Shared UART/JTAG boot executor, method selection and verified R8 profile |
 | `boot/sequence.py` | Earlier isolated boot-state simulation |
 | `assets.py`, `data/` | Asset identity manifest and reviewed OpenOCD 0.12.0 reference |
 | `payload.py`, `legacy_wire.py` | Host archive verification and historical gzip/base64 conversion |
@@ -86,6 +90,7 @@ Run from the checkout after installation. Examples use `.venv/bin/toonrooter`;
 | `package-payload` | Local files only; no transmission, extraction or execution |
 | `simulate-root` | In-memory end-to-end rehearsal; all hardware/SSH observations synthetic |
 | `observe` | **Hardware-capable**, receive-only UART open; finite capture, no software writes |
+| `root` | **Hardware-capable**, auto/uart/jtag temporary root with explicit approvals; no persistent installation |
 
 ```sh
 .venv/bin/toonrooter --help
@@ -115,7 +120,7 @@ Only after a reviewed physical connection and separate authorization:
 It prints timestamped escaped bytes, possible U-Boot version and termination reason.
 Silence is inconclusive if the Toon is already running. It does not reset it to get output.
 
-`probe --jtag` deliberately exits 2 with a disabled explanation. `root`, `boot-console`,
+`probe --jtag` deliberately exits 2 with a disabled explanation. `boot-console`,
 `backup`, `restore`, `verify` and `configure-local` are not CLI commands yet.
 Doctor exits 1 for failed host checks, 0 when its boolean/FAIL checks pass; UNKNOWN
 and HARDWARE_REQUIRED may remain. Exit 2 indicates an application/input error and
@@ -129,8 +134,8 @@ rehearsal. A pseudo-terminal is a local software serial pair, not a connected To
 CI includes Python 3.12–3.14; its remote results have not been established here.
 See the latest entry in [PROGRESS](docs/PROGRESS.md) for this documentation session's run.
 
-Pi host-only validation at `718ae8f` is recorded in [PI3_HOST_VALIDATION](docs/PI3_HOST_VALIDATION.md); Toon/UART/GPIO signaling remains unvalidated. Missing pieces include a
-live JTAG/boot backend, real response contracts, target transfer/staging validation,
+Pi host-only validation at `718ae8f` is recorded in [PI3_HOST_VALIDATION](docs/PI3_HOST_VALIDATION.md); ED2.4/R8 UART and manual temporary root are now verified. JTAG/GPIO remain unvalidated.
+Missing pieces include physical CLI validation, target transfer/staging validation,
 reliable installation postconditions, backups/recovery and real SSH/heating checks.
 The pinned target file overrides the adapter's reset policy; hashes prove file identity,
 not safe initialization. Tar status zero is not an integrity check. There is no tested
@@ -140,5 +145,6 @@ universal rollback. Full details remain in the [architecture](docs/ROOTING_ARCHI
 Current status (2026-11-01): Pi installation/host tests completed at `718ae8f`.
 Do not reinstall this validated host. See [validation](docs/PI3_HOST_VALIDATION.md)
 and the current next-action section in [TODO_MANUALLY](TODO_MANUALLY.md).
-A gated library boot backend now exists; live CLI and installation remain disabled.
+The `root` CLI now enables temporary boot with operation approvals; permanent installation
+remains disabled. See UART_ROOTING for command syntax and R6 evidence limits.
 Only the changed doctor diagnostics need Pi retesting after this revision is installed.

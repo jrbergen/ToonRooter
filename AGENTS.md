@@ -26,6 +26,9 @@ RootSimulation is the integrated source-derived rehearsal, concrete in-memory ri
 Do not equate tar/printf status with target integrity or installation success.
 Pi3 deployment candidate is Lite64/Trixie Python3.13; scripts/install-host.sh only
 installs local host tools into venv. Pi3 host-only validation at 718ae8f is recorded in docs/PI3_HOST_VALIDATION.md.
-Physical Toon/UART/GPIO signaling remains unvalidated. boot/live.py is a separate,
+ED2.4/R8 UART wiring and manual temporary root are physically verified; see
+docs/TOON1_R8_UART_VALIDATION.md. JTAG/GPIO signaling remains unvalidated. boot/live.py is a separate,
 explicitly authorized library backend; fixed bootstrap Tcl is isolated from host Query.
-Its presence grants no hardware execution authorization. CLI JTAG/root remain disabled.
+Its presence grants no hardware execution authorization. root --method auto|uart|jtag
+requires explicit operation approvals; probe --jtag and persistent install remain disabled.
+The new root CLI has simulated tests only; R6 is historical, not our hardware validation.
