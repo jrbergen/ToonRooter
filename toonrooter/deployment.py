@@ -14,12 +14,22 @@ from .security.ssh_keys import public_key, read_regular
 def openocd_profile(version: str, adapters: str, required: str) -> tuple[str, str]:
     if required not in {"bcm2835gpio", "linuxgpiod"}:
         return "FAIL", "Unsupported adapter selection"
-    match = re.search(r"Open On-Chip Debugger (\d+\.\d+\.\d+)([^\s]*)", version)
-    if not match or match[1] != "0.12.0" or "dev" in match[2]:
-        return "FAIL", "Reference profile requires release 0.12.0; other builds need review"
-    if not re.search(r"(?<![\w])" + required + r"(?![\w])", adapters):
+    match = re.search(r"Open On-Chip Debugger\s+(\d+)\.(\d+)\.(\d+)([^\s]*)", version)
+    if not match:
+        return "UNKNOWN", "Unrecognized OpenOCD version; build review required"
+    base = tuple(map(int, match.group(1, 2, 3)))
+    if base < (0, 12, 0):
+        return "FAIL", "Older than reviewed 0.12.0 command/config profile"
+    if required not in adapters.split():
         return "FAIL", f"Required compiled adapter {required} not reported"
-    return "PASS", f"Release profile and compiled {required} present; hardware unvalidated"
+    suffix = match[4]
+    pi_snapshot = (suffix == "+dev-snapshot" and
+                   re.search(r"0\.12\.0\+dev-snapshot \(2026-02-16-16:07\)", version))
+    if base != (0, 12, 0) or (suffix and not re.fullmatch(r"[-+]dfsg[\w.+~-]*", suffix)
+                             and not pi_snapshot):
+        return "UNKNOWN", "Unverified OpenOCD build; review needed, hardware unvalidated"
+    profile = "Pi distro snapshot host-validated" if pi_snapshot else "0.12.0 release profile"
+    return "PASS", f"{profile}; compiled {required} present; JTAG hardware unvalidated"
 
 
 def readiness(*, serial: Path, host: dict, repository=None, scripts=None,

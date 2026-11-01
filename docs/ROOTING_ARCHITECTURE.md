@@ -339,3 +339,42 @@ separate review/authorization. No verified universal recovery; stop rather than 
 Local end-to-end tests pass on Python3.13.12 and3.14.8; this establishes host consistency,
 not electrical/hardware compatibility. Installer shell syntax and ordinary isolated
 pip/wheel deployment were checked, but installer has not been run on the physical Pi.
+
+## Current library backend — 2026-11-01
+
+Supersedes historical statements that no backend exists. boot/live.py is separate
+from BootSequence/RootSimulation and does not accept their synthetic endpoints.
+The CLI still exposes no JTAG/root operation. BootAuthorization separates interactive
+UART, reset/register/RAM changes, reviewed-image execution and Linux shell boot.
+Diagnostics never construct it or grant permission. No live operation was run.
+
+Pi3JtagBoot supports only the reviewed Model B Rev1.2 bcm2835gpio profile. It copies
+validated adapter/board/image plus the vendored target into a private temporary
+working directory, avoiding repository path interpolation and arbitrary target scripts.
+The fixed batch disables GDB/Tcl/telnet listeners, initializes, checks actual CPU/ETB
+IDCODE values, soft-resets, invokes reset init, requires halted state, loads raw binary
+at 0xa1f00000, verify_image checks RAM, then resumes. Marker order and exit status
+are required. Bounded process output/deadline and process-group cleanup are reused.
+Wrong IDs stop before explicit reset/load; init itself still interacts with hardware.
+
+Unlike legacy reset halt, reset init runs the board's reset-init SDRAM/clock handler.
+This is deliberate and disruptive; nested reset run/halt operations are preserved.
+Reference: [OpenOCD reset configuration](https://openocd.org/doc-release/html/Reset-Configuration.html),
+[load/verify/shutdown commands](https://openocd.org/doc-release/html/General-Commands.html).
+Tcl control-flow checks with stubs are not compiled OpenOCD or target validation.
+
+boot_to_console opens UART before JTAG resume, never discards early bytes, and always
+closes it. BootConsole reads supported banner then sends the historical password
+immediately, bounds prompt synchronization, and uses UBootSession for printenv.
+Linux shell boot requires an exact separately reviewed full environment (including
+boot_nand and recursively invoked macros), verifies setenv echo and readback before
+run boot_nand, and stops at a standalone / # prompt. No saveenv, payload, reboot or
+SSH command is available. Use the existing console route where supported; no automatic
+JTAG fallback/retry. The wrapper waits for batch shutdown before parsing buffered UART;
+actual password-window latency/buffering needs physical measurement. Abort kills host
+I/O but cannot undo resets/RAM writes or guarantee the resumed target stops running.
+
+Host-only adapter discovery explicitly echoes and delimits Tcl's return value.
+The exact Pi snapshot timestamp is host-validated, not every development snapshot;
+other unreviewed builds are UNKNOWN. Script-chain verification is a separate check.
+No combination of doctor checks certifies GPIO electrical operation or Toon compatibility.

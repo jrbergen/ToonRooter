@@ -98,3 +98,28 @@ Timeout/disconnect/incomplete archive/error/interruption tests ensure no install
 failed transfer and no reboot after failed checks. No target rollback is claimed.
 Installer changes venv only; manual apt/UART/Bluetooth changes are documented for a
 separately authorized host setup. CI file is project-relevant, IDE files remain excluded.
+
+## 2026-11-01 live-library boundary and remaining installation blockers
+
+Pi host-only results at 718ae8f are now recorded; no target validation occurred.
+boot/live.py adds fixed, separately authorized disruptive operations, outside the
+host-only Query API. Existing simulated endpoints retain concrete-type restrictions.
+Private temporary copies bind execution inputs to inspected bytes; execution approval
+is separate from inventory hashes. No generic Tcl, command or persistent-write API.
+Known image contains NAND write code: explicit image approval must account for startup
+and BBT behavior; RAM placement alone is not a non-persistence guarantee.
+
+Current complete bootstrap is unsuitable for identification-only testing. A dedicated
+reviewed profile and staged hardware acceptance remain necessary. Killing OpenOCD or
+closing UART does not restore thermostat control. Linux shell boot bypasses heating
+services; do not infer success or recovery from a prompt.
+
+Payload remains unchanged deliberately during boot-backend work. Concrete blockers
+already found: SFTP error invokes dropbear.postinst; opkg statuses other than 255 can
+be ignored; authorized_keys permissions/duplicates unchecked; partial sed/package
+changes lack rollback; password printed by script. These must be fixed compatibly and
+tested before enabling live installation. Actual firmware tool availability, terminal
+modes, RAM staging/free-space and completion evidence are unknown. Retain gzip/base64
+compatibility; tar exit zero is neither content verification nor install success.
+Never automatically reboot a partially failed install. Postconditions must check files,
+key permissions, package/service state, then real SSH and autonomous heating separately.

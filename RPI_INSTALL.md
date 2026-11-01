@@ -144,7 +144,7 @@ describes the distinction. Listing GPIO files does not test their signals.
 ## 4. Verify and troubleshoot
 
 Continue with Phase C in [TODO_MANUALLY.md](TODO_MANUALLY.md). No application code
-changes are required before host-only testing; physical Pi validation is still pending.
+changes are required before host-only testing; Pi host-only validation is recorded in [PI3_HOST_VALIDATION](docs/PI3_HOST_VALIDATION.md).
 
 | Problem | Action |
 |---|---|
@@ -158,3 +158,9 @@ changes are required before host-only testing; physical Pi validation is still p
 | Unstable Pi | Check power/cable and `vcgencmd get_throttled`; nonzero flags can record current or past throttling/undervoltage. Resolve before target tests |
 
 No installation command here opens a target debug session or roots the Toon.
+
+Current status (2026-11-01): Pi installation/host tests completed at `718ae8f`.
+Do not reinstall this validated host. See [validation](docs/PI3_HOST_VALIDATION.md)
+and the current next-action section in [TODO_MANUALLY](TODO_MANUALLY.md).
+A gated library boot backend now exists; live CLI and installation remain disabled.
+Only the changed doctor diagnostics need Pi retesting after this revision is installed.

@@ -104,3 +104,34 @@ Current next action remains M4-01b/M4-02: fresh Lite64/Trixie host-only tests, T
 disconnected. CI workflow is now tracked in d2d2b4e (earlier notes predate that commit).
 No code change is required to begin this test; live rooting still needs M2-02c-4,
 M2-03c and the subsequent physical acceptance gates.
+
+## Pi host milestone and live backend — 2026-11-01 (current status)
+
+This update supersedes earlier next-action/absence-of-backend statements.
+- [x] M4-01b: user supplied real Pi3 install/host results at `718ae8f`.
+- [x] M4-02 host-only scope: ARM64 Python3.13.5 suite, adapter discovery,
+  permissions and static installed-script match recorded in PI3_HOST_VALIDATION.md.
+  Actual UART and GPIO signaling remain outside this acceptance.
+- [x] Diagnostic regression: echoed/delimited adapter result; exact Pi snapshot
+  recognized as host-validated, older versions fail and unknown builds remain UNKNOWN.
+- [x] M2-02c-4a: separate opt-in library JTAG/U-Boot backend with pinned Pi3 files,
+  actual TAP checks, explicit reset-init handler, RAM load/readback verification,
+  UART login, reviewed environment/readback and shell prompt checks, cleanup tests.
+- [ ] M2-02c-4 / M2-02 parent: compiled OpenOCD command behavior, UART password
+  timing, reset sequence and image startup still require physical acceptance.
+  No live CLI is enabled; no actual target execution occurred.
+- [ ] M2-03c/M3/M5: actual receiver/staging/tool/mount inspection, installer failure
+  handling and postconditions, backups/recovery, reboot/SSH/heating verification.
+
+Next: separately authorized electrical inspection then RX/GND-only observe as specified
+in TODO_MANUALLY.md. Prefer existing supported console; review actual complete boot
+macros before shell boot. Prepare an identification-only JTAG profile before that
+staged test: current library bootstrap proceeds through RAM resume and must not be
+used as a probe. Review image startup/BBT effects before approving its execution.
+No repeat OS installation or completed host checklist is needed. Rerun only revised
+Pi diagnostics after deployment. Python3.12/3.14 remote CI remains unconfirmed.
+
+Local verification for this milestone: Python3.13.5 x86_64, 167 pytest cases pass
+without skips, Ruff/compileall/dependency check pass, source/wheel builds and installed
+wheel resource/profile/gate smoke check pass. Tcl stubs check fail-stop control flow;
+no physical OpenOCD/UART execution. See current PROGRESS entry for limits.

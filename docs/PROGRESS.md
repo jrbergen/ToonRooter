@@ -157,3 +157,58 @@ Next: follow RPI_INSTALL.md then TODO_MANUALLY.md Phase C; share host results be
 User authorized committing this documentation work and encouraged descriptive local
 commits after future implementation/documentation steps. AGENTS.md updated accordingly;
 pushing still requires explicit instruction. Documentation diff check passed.
+
+## Pi evidence and live boot implementation — 2026-11-01
+
+Baseline `718ae8f`, branch py3-modernize; preserved earlier `d2d2b4e` milestone
+and pre-existing untracked .idea/ and uv.lock (neither staged). Read repository guides,
+architecture/audit, legacy Python/config/payload and relevant current modules/tests.
+Created PI3_HOST_VALIDATION.md from user-supplied real Pi3 results: Lite64 Trixie,
+Python3.13.5 ARM64, distro OpenOCD snapshot, UART/GPIO metadata, installed-script
+comparison, packages/keys/payload preparation, eleven-phase synthetic rehearsal,
+/dev/null regression fix and final 135 passing tests/Ruff. This session did not
+reproduce those Pi results or access either physical device.
+
+Fixed diagnostics: adapter list returned a Tcl value without printing; explicit echo
+with delimiters now separates actual drivers from merged banners/shutdown messages.
+Exact 0.12.0+dev-snapshot (2026-02-16-16:07) is host-validated; ordinary reviewed
+0.12.0/dfsg releases supported, older profiles FAIL, unverified builds UNKNOWN.
+Compiled driver availability remains separate from installed scripts and hardware.
+
+Added boot/live.py: library-only fixed Pi3 bootstrap, exact inventory/private copies,
+vendored target chain, actual TAP ID checks, explicit reset-init clocks/SDRAM handler,
+halted-state check, load_image/verify_image then resume. Uses bounded process runner,
+no listeners, no generic Tcl interface, fail-stop cleanup. Explicit separate approvals
+for UART commands, reset/register/RAM, image execution and Linux shell boot. UART
+opened before resume, no input discard. Supported-banner login, environment inspection,
+exact separately reviewed full macro environment, setenv echo/readback, then boot_nand
+and bounded Linux prompt. Existing supported console preferred, no automatic fallback.
+No simulated endpoint connected to live transport; existing contracts remain isolated.
+
+Important implementation limits: batch shutdown precedes buffered UART login, so
+password-window latency still needs measurement. reset init deliberately differs from
+legacy reset halt to invoke SDRAM setup; physical behavior is unvalidated. GPIO timing,
+reset wiring, compiled OpenOCD semantics, RAM image startup/BBT and PCB/firmware remain
+unverified. Current bootstrap is not an identification-only probe. No live root/JTAG CLI,
+receiver/install/reboot/SSH executor, backup or recovery claim. Abort cannot undo target
+state changes. Payload left unchanged during boot work; documented ignored package
+failures, wrong SFTP postinst and partial-install/key/secret-handling defects remain
+mandatory fixes before enabling install. No invented target checksum acknowledgement.
+
+Updated plan, architecture/audit, AGENTS and user guides. TODO_MANUALLY now specifies
+PCB/pin/voltage confirmation and first separately authorized RX/GND-only observe,
+then existing console preference and staged JTAG/boot validation. Pi OS reinstallation
+and repeated completed host tests are not needed; revised doctor needs Pi confirmation.
+
+Verification on development host, Python3.13.5 x86_64: **167 passed in 6.96 seconds,
+zero skips**; Ruff passed; compileall passed; uv pip check found all 13 installed
+packages compatible. Source/wheel build passed; wheel installed under /tmp and imported
+outside checkout, including pinned target resource/profile/authorization smoke checks.
+Local Tcl stub harness exercised actual fixed script control flow for success, wrong
+CPU/ETB IDs, load and verify failures (no resume after failure). This is not OpenOCD
+interpreter/hardware validation. Regression tests also cover merged stdout/stderr,
+unknown/missing adapters, version strings, abort/temp/process cleanup, wrong prompts,
+UART timeout/disconnect, environment mismatch/readback failure and withheld approvals.
+No Pi/Toon access, physical signaling, target code/payload execution or push performed.
+Next: reviewed electrical inspection and receive-only UART capture; M2/M3/M5 parents
+remain open pending actual acceptance, identification-only profile and installation work.

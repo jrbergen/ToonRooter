@@ -12,7 +12,8 @@ Do not infer safe probing from an OpenOCD configuration: reset event handlers wr
 Preserve existing private keys; never log key material or passwords.
 Diagnostic levels: doctor/default probe host-only; observe is explicit receive-only UART
 and still carries control-line opening risk. probe --jtag is deliberately disabled.
-OpenOCD accepts only fixed host Query enums, never legacy target configs or arbitrary Tcl.
+OpenOCD.query accepts only fixed host Query enums, never target configs or arbitrary Tcl.
+The separate boot/live.py backend uses fixed target Tcl and explicit operation approvals.
 UBootSession printenv is an explicit interactive library operation, never passive observe.
 BootSequence and SimulatedTransfer accept only their concrete in-memory endpoints.
 Do not connect simulator contracts to live devices. Asset hashes permit inspection/
@@ -24,4 +25,7 @@ Prefer established supported console access before disruptive JTAG fallback plan
 RootSimulation is the integrated source-derived rehearsal, concrete in-memory rig only.
 Do not equate tar/printf status with target integrity or installation success.
 Pi3 deployment candidate is Lite64/Trixie Python3.13; scripts/install-host.sh only
-installs local host tools into venv. Physical Pi validation has not been performed.
+installs local host tools into venv. Pi3 host-only validation at 718ae8f is recorded in docs/PI3_HOST_VALIDATION.md.
+Physical Toon/UART/GPIO signaling remains unvalidated. boot/live.py is a separate,
+explicitly authorized library backend; fixed bootstrap Tcl is isolated from host Query.
+Its presence grants no hardware execution authorization. CLI JTAG/root remain disabled.

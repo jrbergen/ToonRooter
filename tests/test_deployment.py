@@ -9,10 +9,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @pytest.mark.parametrize("version,adapters,result", [
     ("Open On-Chip Debugger 0.12.0", "bcm2835gpio {jtag swd}", "PASS"),
-    ("Open On-Chip Debugger 0.12.0+dev", "bcm2835gpio", "FAIL"),
+    ("Open On-Chip Debugger 0.12.0+dev", "bcm2835gpio", "UNKNOWN"),
     ("Open On-Chip Debugger 0.11.0", "bcm2835gpio", "FAIL"),
     ("Open On-Chip Debugger 0.12.0", "not_bcm2835gpio", "FAIL"),
-    ("unknown", "bcm2835gpio", "FAIL"),
+    ("unknown", "bcm2835gpio", "UNKNOWN"),
 ])
 def test_openocd_release_adapter_profile(version, adapters, result):
     assert openocd_profile(version, adapters, "bcm2835gpio")[0] == result

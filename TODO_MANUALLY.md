@@ -1,6 +1,6 @@
 # Manual tests and remaining work
 
-**Immediate objective: freshly install the Pi, then test with no Toon connected.**
+**Immediate objective: prepare receive-only UART validation; Pi host tests completed.**
 The current app is ready for that. It is not yet a live rooting utility.
 Commands below assume the Pi checkout at `~/ToonRooter` unless stated otherwise.
 
@@ -47,7 +47,7 @@ git log -1 --oneline
 python3 --version
 uname -m
 openocd --version
-openocd -c 'noinit; adapter list; shutdown'
+openocd -c 'noinit; echo [adapter list]; shutdown'
 readlink -f /dev/serial0
 cat /proc/cmdline
 id
@@ -272,3 +272,46 @@ Assistant shutdown: the Toon must continue regulating the boiler autonomously.
 
 **Next action: flash the existing microSD using RPI_INSTALL.md, then complete Phase C
 with the Toon disconnected and share the results checklist.**
+
+## Current next action — 2026-11-01 (supersedes Phases B/C and old next-action text)
+
+**Pi host validation is complete at 718ae8f**; see
+[PI3_HOST_VALIDATION](docs/PI3_HOST_VALIDATION.md). Do not reinstall or repeat the
+completed host checklist. After installing this development revision, rerun doctor
+only to confirm the changed adapter/version diagnostics on the Pi. No target attached.
+
+First physical test, in a separately authorized session:
+
+1. Power off before opening/identifying the display PCB. Confirm product
+   6500-1400-2001, PCB revision, header pin 1/orientation and continuity of ground.
+   The historical table in Phase E is a reference, not revision-specific confirmation.
+2. With an appropriate meter/scope and agreed safe power arrangement, confirm Toon
+   TX (historical pin 13) idles near 3.3 V relative to GND (historical pin 14).
+   A meter can establish idle DC, not pulse overshoot; inspect signal levels with a
+   scope if uncertain. Stop for 5 V, negative/RS-232 levels, uncertain ground or
+   connector numbering. Pi inputs are not 5 V tolerant. Never connect VT/supply rails.
+3. After the power/connection plan excludes back-powering, use only confirmed Toon
+   pin 13 TX -> Pi physical 10 / BCM15 RX, and Toon pin 14 GND -> Pi physical 9 GND.
+   Pi TX (physical 8), Toon RX, all JTAG/reset and supply pins stay disconnected.
+   Recheck shorts and signal direction. No reset or deliberate power cycle is part
+   of this first capture; silence on an already running Toon is inconclusive.
+4. Run the supported command:
+   `.venv/bin/toonrooter observe --serial /dev/serial0 --timeout 30 --max-bytes 65536`
+   Expect timestamped escaped UART bytes at 115200 8N1; possible Linux/U-Boot banner,
+   or silence. It makes no software writes and never sends a password or BREAK.
+   Opening pySerial sets DTR/RTS inactive, but driver glitches remain possible;
+   those lines must not be wired. RX-only wiring avoids a Pi TX path to the Toon.
+5. Stop for unexpected reset, display/heating disturbance, power instability,
+   abnormal voltage/heat or sustained framing garbage. Retain capture privately;
+   boot/environment output may expose identifiers or credentials. Do not infer an
+   alternate baud rate, login, reset or JTAG permission from silence.
+
+Next stages need separate authorization: inspect the captured firmware/banner;
+prefer supported existing U-Boot console access; review actual environment/macros
+before shell boot. If JTAG is needed, review revision-specific wiring/reset levels,
+then implement/use an identification-only fixed profile (not yet exposed). The new
+Pi3JtagBoot backend combines identification with disruptive initialization; it must
+NOT be used as an identification-only probe. Check both TAP IDs before RAM loading.
+Then approve the exact historical image's startup risks, run volatile boot validation,
+and capture UART. No persistent installation before backups and receiver/tool/mount
+inspection. The library has no live install, reboot or SSH verification operation.

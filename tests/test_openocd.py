@@ -17,7 +17,7 @@ def client_for(script):
 def test_fixed_host_sequences():
     client, calls = client_for("print('bcm2835gpio linuxgpiod')")
     assert b"linuxgpiod" in client.query(Query.ADAPTERS)
-    assert calls[0][0] == ["/fake/openocd", "-c", "noinit; adapter list; shutdown"]
+    assert calls[0][0] == ["/fake/openocd", "-c", Query.ADAPTERS.value[1]]
     assert calls[0][1]["start_new_session"]
     assert calls[0][1]["cwd"] == "/"
 
@@ -60,3 +60,15 @@ def test_interruption_reaps_process(monkeypatch):
     assert processes[0].returncode == -signal.SIGKILL
     with pytest.raises(ProcessLookupError):
         os.kill(processes[0].pid, 0)
+
+
+def test_adapter_result_across_merged_streams():
+    from toonrooter.hardware.openocd import parse_adapters
+    client, _ = client_for(
+        "import sys; print('OpenOCD banner', file=sys.stderr, flush=True); "
+        "print('TOON_ADAPTERS_BEGIN', flush=True); "
+        "print('bcm2835gpio linuxgpiod', file=sys.stderr, flush=True); "
+        "print('TOON_ADAPTERS_END', flush=True); "
+        "print('shutdown command invoked', file=sys.stderr, flush=True)"
+    )
+    assert parse_adapters(client.query(Query.ADAPTERS).decode()) == ('bcm2835gpio', 'linuxgpiod')

@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from .boot.uboot import version
-from .hardware.openocd import OpenOCD, OpenOCDError, Query
+from .hardware.openocd import OpenOCD, OpenOCDError, Query, parse_adapters
 from .hardware.serial import SerialTransport
 
 
@@ -25,7 +25,9 @@ def host_details():
     try:
         client = OpenOCD()
         for query in Query:
-            details["openocd"][query.name] = client.query(query).decode("utf-8", "replace")
+            output = client.query(query).decode("utf-8", "replace")
+            details["openocd"][query.name] = (" ".join(parse_adapters(output))
+                                                if query is Query.ADAPTERS else output)
     except (OpenOCDError, OSError) as exc:
         details["openocd"]["error"] = str(exc)
     return details

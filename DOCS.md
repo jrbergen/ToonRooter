@@ -129,10 +129,16 @@ rehearsal. A pseudo-terminal is a local software serial pair, not a connected To
 CI includes Python 3.12–3.14; its remote results have not been established here.
 See the latest entry in [PROGRESS](docs/PROGRESS.md) for this documentation session's run.
 
-No physical Pi/Toon compatibility has been demonstrated. Missing pieces include a
+Pi host-only validation at `718ae8f` is recorded in [PI3_HOST_VALIDATION](docs/PI3_HOST_VALIDATION.md); Toon/UART/GPIO signaling remains unvalidated. Missing pieces include a
 live JTAG/boot backend, real response contracts, target transfer/staging validation,
 reliable installation postconditions, backups/recovery and real SSH/heating checks.
 The pinned target file overrides the adapter's reset policy; hashes prove file identity,
 not safe initialization. Tar status zero is not an integrity check. There is no tested
 universal rollback. Full details remain in the [architecture](docs/ROOTING_ARCHITECTURE.md),
 [audit](docs/SECURITY_AUDIT.md) and [roadmap](docs/IMPLEMENTATION_PLAN.md).
+
+Current status (2026-11-01): Pi installation/host tests completed at `718ae8f`.
+Do not reinstall this validated host. See [validation](docs/PI3_HOST_VALIDATION.md)
+and the current next-action section in [TODO_MANUALLY](TODO_MANUALLY.md).
+A gated library boot backend now exists; live CLI and installation remain disabled.
+Only the changed doctor diagnostics need Pi retesting after this revision is installed.
