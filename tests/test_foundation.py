@@ -68,7 +68,18 @@ def test_unsafe_paths(tmp_path):
 
 
 def test_doctor_never_opens_devices(monkeypatch, capsys):
-    monkeypatch.setattr(os, "open", lambda *a, **k: pytest.fail("device opened"))
+    original_open = os.open
+
+    def guarded_open(path, *args, **kwargs):
+        # subprocess.DEVNULL legitimately opens /dev/null.
+        # Other os.open calls remain forbidden by this test.
+        if os.fsdecode(path) != os.devnull:
+            pytest.fail(f"Unexpected os.open: {path!r}")
+
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(os, "open", guarded_open)
+
     assert main(["doctor", "--serial-port", "/nonexistent-toon-port"]) == 1
     assert "UNVALIDATED" in capsys.readouterr().out
 
